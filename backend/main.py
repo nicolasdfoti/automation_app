@@ -7,6 +7,9 @@ wraps them.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from backend.routers import properties as properties_router
+from backend.routers import stats as stats_router
+
 app = FastAPI(title="Automation Suite API", version="0.1.0")
 
 # Development CORS for the future React app (Vite dev server).
@@ -27,3 +30,7 @@ app.add_middleware(
 @app.get("/api/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+app.include_router(properties_router.router, prefix="/api")
+app.include_router(stats_router.router, prefix="/api")
