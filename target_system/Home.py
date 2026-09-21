@@ -2,12 +2,13 @@ import sys
 import time
 from pathlib import Path
 
-import pandas as pd
 import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from shared_store import db
 import ui
+
+from backend.services.dashboard import compute_dashboard_stats, recent_activity
 
 st.set_page_config(page_title="SIGE — Sistema de Gestion Edilicia", page_icon="\U0001F4D0", layout="wide")
 ui.inject_css()
@@ -45,10 +46,11 @@ if df.empty:
     st.stop()
 
 # --- KPIs como fichas tipo plano ---
-pendientes = int((df["esquematico_generado"] == False).sum())  # noqa: E712
-corregidas = int((df["fuente"] == "automatizacion OCR").sum())
-superficie_total = df["superficie_m2"].sum()
-capacidad_total = int(df["capacidad_personas"].sum())
+stats = compute_dashboard_stats(df)
+pendientes = stats["pendientes"]
+corregidas = stats["corregidas"]
+superficie_total = stats["superficie_total"]
+capacidad_total = stats["capacidad_total"]
 
 kpis = [
     ("PROPIEDADES", f"{len(df)}"),
@@ -74,9 +76,7 @@ with col_izq:
     st.markdown("**Actividad reciente**")
     st.caption("Ultimas propiedades actualizadas, mas nuevas primero.")
 
-    reciente = df.copy()
-    reciente["_fecha_ord"] = pd.to_datetime(reciente["ultima_actualizacion"], format="%d/%m/%Y", errors="coerce")
-    reciente = reciente.sort_values("_fecha_ord", ascending=False).head(8)
+    reciente = recent_activity(df)
 
     prev_map = st.session_state.get("sige_prev_fuente", {})
     curr_map = dict(zip(df["codigo"].astype(str), df["fuente"]))

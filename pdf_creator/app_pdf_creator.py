@@ -7,6 +7,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from shared_store import db
 from pdf_creator import generator, schema
 
+from backend.services.schematics import build_numeric_overrides
+
 st.set_page_config(page_title="Generador de Esquematicos", page_icon="\U0001F4C4", layout="wide")
 
 st.markdown(
@@ -62,13 +64,13 @@ else:
         submitted = st.form_submit_button("\U0001F4C4 Generar esquematico", type="primary", use_container_width=True)
 
     if submitted:
-        overrides = {
-            "superficie_m2": superficie or None,
-            "capacidad_personas": int(capacidad) or None,
-            "plazas_estacionamiento": int(plazas) or None,
-            "anio_construccion": int(anio) or None,
-            "salas": int(salas) or None,
-        }
+        overrides = build_numeric_overrides(
+            superficie_m2=superficie,
+            capacidad_personas=capacidad,
+            plazas_estacionamiento=plazas,
+            anio_construccion=anio,
+            salas=salas,
+        )
         pdf_path, record = generator.generate_for_property(codigo_sel, overrides)
         st.success(f"Esquematico generado para la propiedad {codigo_sel}.")
         with open(pdf_path, "rb") as f:

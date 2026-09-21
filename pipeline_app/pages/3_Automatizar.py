@@ -1,5 +1,4 @@
 import sys
-from datetime import date
 from pathlib import Path
 
 import pandas as pd
@@ -9,6 +8,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from shared_store import db
 import ui
+
+from backend.services.automation import (
+    already_automated_codes,
+    apply_corrections,
+    build_preview,
+    filter_candidates,
+    merge_ocr_data,
+)
 
 st.set_page_config(page_title="Automatizar — Demo", page_icon="\U0001F916", layout="wide")
 ui.inject_css()
@@ -29,22 +36,19 @@ if propiedades.empty or ocr.empty:
     )
     st.stop()
 
-campos = db.NUMERIC_FIELDS
-base = propiedades[["codigo", "direccion", "fuente"] + campos].merge(
-    ocr[["codigo"] + campos], on="codigo", suffixes=("_legacy", "_ocr"), how="inner"
-)
+base = merge_ocr_data(propiedades, ocr)
 
 if base.empty:
     ui.empty_state("\U0001F916", "No hay codigos en comun", "El OCR todavia no proceso ninguna propiedad que exista en SIGE.")
     st.stop()
 
-ya_automatizadas = set(propiedades[propiedades["fuente"] == "automatizacion OCR"]["codigo"].astype(str))
+ya_automatizadas = already_automated_codes(propiedades)
 
 forzar = st.checkbox(
     "Reprocesar propiedades ya automatizadas antes", value=False,
     help="Por defecto solo se proponen correcciones para propiedades con datos legacy sin tocar.",
 )
-candidatas = base if forzar else base[~base["codigo"].astype(str).isin(ya_automatizadas)]
+candidatas = filter_candidates(base, ya_automatizadas, forzar)
 
 ui.metric_row([
     {"label": "Propiedades con OCR disponible", "value": len(base), "hint": "cruzan con SIGE"},
@@ -59,17 +63,7 @@ if candidatas.empty:
 st.divider()
 ui.section_label("Antes / despues (previsualizacion)")
 
-filas_preview = []
-for _, row in candidatas.iterrows():
-    for campo in campos:
-        legacy, ocr_val = row[f"{campo}_legacy"], row[f"{campo}_ocr"]
-        if pd.isna(ocr_val):
-            continue  # el OCR no pudo leer este campo: no se toca
-        if str(legacy) != str(ocr_val):
-            filas_preview.append({
-                "Codigo": row["codigo"], "Direccion": row["direccion"], "Campo": campo,
-                "Valor actual (legacy)": legacy, "Valor nuevo (OCR)": ocr_val,
-            })
+filas_preview = build_preview(candidatas)
 
 if not filas_preview:
     st.caption("Los valores del OCR coinciden con lo que ya tenia SIGE — nada para corregir.")
@@ -79,25 +73,10 @@ else:
 st.caption(f"{candidatas['codigo'].nunique()} propiedades, {len(filas_preview)} campos a corregir en total.")
 
 if ui.button_primary(f"\u2705 Aplicar automatizacion a {len(candidatas)} propiedades", key="aplicar_auto"):
-    hoy = date.today().strftime("%d/%m/%Y")
-    corregidas, campos_corregidos = 0, 0
-    for _, row in candidatas.iterrows():
-        updates = {}
-        for campo in campos:
-            ocr_val = row[f"{campo}_ocr"]
-            if pd.isna(ocr_val):
-                continue
-            if str(row[f"{campo}_legacy"]) != str(ocr_val):
-                updates[campo] = ocr_val
-                campos_corregidos += 1
-        if updates:
-            updates["fuente"] = "automatizacion OCR"
-            updates["ultima_actualizacion"] = hoy
-            db.update_property(row["codigo"], updates)
-            corregidas += 1
-
+    resumen = apply_corrections(candidatas)
     ui.info_banner(
-        f"Automatizacion aplicada: {corregidas} propiedades corregidas, {campos_corregidos} campos actualizados en SIGE.",
+        f"Automatizacion aplicada: {resumen['corregidas']} propiedades corregidas, "
+        f"{resumen['campos_corregidos']} campos actualizados en SIGE.",
         tone="success",
     )
     st.caption("Anda al panel de SIGE (target_system) para ver el antes/despues reflejado.")
