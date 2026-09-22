@@ -133,3 +133,34 @@ export interface CompareResponse {
   per_field: ComparePerField[];
   items: CompareItem[];
 }
+
+export interface AutomationChange {
+  field: string;
+  label: string;
+  current_value: number | null;
+  new_value: number | null;
+}
+
+export interface AutomationItem {
+  codigo: string;
+  direccion: string | null;
+  changes: AutomationChange[];
+}
+
+export interface AutomationPreview {
+  total_properties: number;
+  properties_with_changes: number;
+  total_changes: number;
+  items: AutomationItem[];
+}
+
+export interface AutomationUpdatedItem {
+  codigo: string;
+  updated_fields: string[];
+}
+
+export interface AutomationApplyResult {
+  updated_properties: number;
+  updated_fields: number;
+  items: AutomationUpdatedItem[];
+}

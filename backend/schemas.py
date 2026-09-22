@@ -178,3 +178,38 @@ class CompareResponse(BaseModel):
     propiedades_con_error: int
     per_field: list[ComparePerField]
     items: list[CompareItem]
+
+
+class AutomationChange(BaseModel):
+    """One proposed field correction: current (stale) vs new (OCR) value."""
+
+    field: str
+    label: str
+    current_value: float | int | None = None
+    new_value: float | int | None = None
+
+
+class AutomationItem(BaseModel):
+    """Proposed corrections for a single property."""
+
+    codigo: str
+    direccion: str | None = None
+    changes: list[AutomationChange]
+
+
+class AutomationPreview(BaseModel):
+    total_properties: int
+    properties_with_changes: int
+    total_changes: int
+    items: list[AutomationItem]
+
+
+class AutomationUpdatedItem(BaseModel):
+    codigo: str
+    updated_fields: list[str]
+
+
+class AutomationApplyResult(BaseModel):
+    updated_properties: int
+    updated_fields: int
+    items: list[AutomationUpdatedItem]
