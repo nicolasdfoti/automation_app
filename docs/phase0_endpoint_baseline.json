@@ -1,0 +1,1356 @@
+{
+  "/api/health": {
+    "status": 200,
+    "body": {
+      "status": "ok"
+    }
+  },
+  "/api/properties": {
+    "status": 200,
+    "body": {
+      "count": 20,
+      "items": [
+        {
+          "codigo": "550482",
+          "direccion": "Av. Belgrano 1827, Tigre",
+          "superficie_m2": 563.0,
+          "capacidad_personas": 64,
+          "plazas_estacionamiento": 6,
+          "anio_construccion": 2020,
+          "salas": 15,
+          "esquematico_generado": true,
+          "archivo_esquematico": "550482_mock.pdf",
+          "fuente": "automatizacion OCR",
+          "ultima_actualizacion": "21/09/2026"
+        },
+        {
+          "codigo": "239789",
+          "direccion": "Av. Rivadavia 4267, Tigre",
+          "superficie_m2": 1276.4,
+          "capacidad_personas": 118,
+          "plazas_estacionamiento": 79,
+          "anio_construccion": 1993,
+          "salas": 14,
+          "esquematico_generado": true,
+          "archivo_esquematico": "239789_mock.pdf",
+          "fuente": "automatizacion OCR",
+          "ultima_actualizacion": "21/09/2026"
+        },
+        {
+          "codigo": "699807",
+          "direccion": "Calle Moreno 2043, Moron",
+          "superficie_m2": 1054.8,
+          "capacidad_personas": 189,
+          "plazas_estacionamiento": 51,
+          "anio_construccion": 2012,
+          "salas": 9,
+          "esquematico_generado": true,
+          "archivo_esquematico": "699807_mock.pdf",
+          "fuente": "automatizacion OCR",
+          "ultima_actualizacion": "21/09/2026"
+        },
+        {
+          "codigo": "851040",
+          "direccion": "Av. Corrientes 4978, Vicente Lopez",
+          "superficie_m2": 627.8,
+          "capacidad_personas": 162,
+          "plazas_estacionamiento": 5,
+          "anio_construccion": 2019,
+          "salas": 24,
+          "esquematico_generado": true,
+          "archivo_esquematico": "851040_mock.pdf",
+          "fuente": "automatizacion OCR",
+          "ultima_actualizacion": "21/09/2026"
+        },
+        {
+          "codigo": "41376",
+          "direccion": "Av. Corrientes 2450, Vicente Lopez",
+          "superficie_m2": 1118.7,
+          "capacidad_personas": 206,
+          "plazas_estacionamiento": 69,
+          "anio_construccion": 2015,
+          "salas": 6,
+          "esquematico_generado": true,
+          "archivo_esquematico": "41376_mock.pdf",
+          "fuente": "automatizacion OCR",
+          "ultima_actualizacion": "21/09/2026"
+        },
+        {
+          "codigo": "549312",
+          "direccion": "Av. Belgrano 4209, San Isidro",
+          "superficie_m2": 1272.6,
+          "capacidad_personas": 34,
+          "plazas_estacionamiento": 55,
+          "anio_construccion": 2013,
+          "salas": 20,
+          "esquematico_generado": true,
+          "archivo_esquematico": "549312_mock.pdf",
+          "fuente": "automatizacion OCR",
+          "ultima_actualizacion": "21/09/2026"
+        },
+        {
+          "codigo": "713065",
+          "direccion": "Av. Libertador 4547, Lomas de Zamora",
+          "superficie_m2": 217.0,
+          "capacidad_personas": 94,
+          "plazas_estacionamiento": 23,
+          "anio_construccion": 1969,
+          "salas": 17,
+          "esquematico_generado": true,
+          "archivo_esquematico": "713065_mock.pdf",
+          "fuente": "automatizacion OCR",
+          "ultima_actualizacion": "21/09/2026"
+        },
+        {
+          "codigo": "923643",
+          "direccion": "Av. Libertador 3660, Vicente Lopez",
+          "superficie_m2": 127.3,
+          "capacidad_personas": 89,
+          "plazas_estacionamiento": 48,
+          "anio_construccion": 1957,
+          "salas": 15,
+          "esquematico_generado": true,
+          "archivo_esquematico": "923643_mock.pdf",
+          "fuente": "automatizacion OCR",
+          "ultima_actualizacion": "21/09/2026"
+        },
+        {
+          "codigo": "74654",
+          "direccion": "Av. Corrientes 3353, Lomas de Zamora",
+          "superficie_m2": 177.3,
+          "capacidad_personas": 120,
+          "plazas_estacionamiento": 50,
+          "anio_construccion": 1981,
+          "salas": 21,
+          "esquematico_generado": true,
+          "archivo_esquematico": "74654_mock.pdf",
+          "fuente": "automatizacion OCR",
+          "ultima_actualizacion": "21/09/2026"
+        },
+        {
+          "codigo": "814659",
+          "direccion": "Calle Moreno 4346, San Isidro",
+          "superficie_m2": 1345.2,
+          "capacidad_personas": 178,
+          "plazas_estacionamiento": 12,
+          "anio_construccion": 2005,
+          "salas": 12,
+          "esquematico_generado": true,
+          "archivo_esquematico": "814659_mock.pdf",
+          "fuente": "automatizacion OCR",
+          "ultima_actualizacion": "21/09/2026"
+        },
+        {
+          "codigo": "267990",
+          "direccion": "Calle Mitre 864, Tigre",
+          "superficie_m2": 487.2,
+          "capacidad_personas": 98,
+          "plazas_estacionamiento": 83,
+          "anio_construccion": 1983,
+          "salas": 3,
+          "esquematico_generado": true,
+          "archivo_esquematico": "267990_mock.pdf",
+          "fuente": "automatizacion OCR",
+          "ultima_actualizacion": "21/09/2026"
+        },
+        {
+          "codigo": "371851",
+          "direccion": "Calle Sarmiento 3081, La Matanza",
+          "superficie_m2": 521.3,
+          "capacidad_personas": 189,
+          "plazas_estacionamiento": 72,
+          "anio_construccion": 2004,
+          "salas": 5,
+          "esquematico_generado": true,
+          "archivo_esquematico": "371851_mock.pdf",
+          "fuente": "automatizacion OCR",
+          "ultima_actualizacion": "21/09/2026"
+        },
+        {
+          "codigo": "768904",
+          "direccion": "Av. Libertador 3663, Moron",
+          "superficie_m2": 186.1,
+          "capacidad_personas": 319,
+          "plazas_estacionamiento": 85,
+          "anio_construccion": 1961,
+          "salas": 15,
+          "esquematico_generado": true,
+          "archivo_esquematico": "768904_mock.pdf",
+          "fuente": "automatizacion OCR",
+          "ultima_actualizacion": "21/09/2026"
+        },
+        {
+          "codigo": "982505",
+          "direccion": "Av. Rivadavia 2352, Moron",
+          "superficie_m2": 1347.8,
+          "capacidad_personas": 38,
+          "plazas_estacionamiento": 69,
+          "anio_construccion": 1974,
+          "salas": 8,
+          "esquematico_generado": true,
+          "archivo_esquematico": "982505_mock.pdf",
+          "fuente": "automatizacion OCR",
+          "ultima_actualizacion": "21/09/2026"
+        },
+        {
+          "codigo": "256587",
+          "direccion": "Av. Libertador 4150, San Miguel",
+          "superficie_m2": 1283.5,
+          "capacidad_personas": 307,
+          "plazas_estacionamiento": 20,
+          "anio_construccion": 1975,
+          "salas": 9,
+          "esquematico_generado": true,
+          "archivo_esquematico": "256587_mock.pdf",
+          "fuente": "automatizacion OCR",
+          "ultima_actualizacion": "21/09/2026"
+        },
+        {
+          "codigo": "584445",
+          "direccion": "Av. San Martin 1671, Lomas de Zamora",
+          "superficie_m2": 446.7,
+          "capacidad_personas": 61,
+          "plazas_estacionamiento": 58,
+          "anio_construccion": 1985,
+          "salas": 24,
+          "esquematico_generado": true,
+          "archivo_esquematico": "584445_mock.pdf",
+          "fuente": "automatizacion OCR",
+          "ultima_actualizacion": "21/09/2026"
+        },
+        {
+          "codigo": "307022",
+          "direccion": "Av. Rivadavia 2651, Quilmes",
+          "superficie_m2": 1323.0,
+          "capacidad_personas": 259,
+          "plazas_estacionamiento": 28,
+          "anio_construccion": 1970,
+          "salas": 2,
+          "esquematico_generado": true,
+          "archivo_esquematico": "307022_mock.pdf",
+          "fuente": "automatizacion OCR",
+          "ultima_actualizacion": "21/09/2026"
+        },
+        {
+          "codigo": "754155",
+          "direccion": "Av. Libertador 1491, Quilmes",
+          "superficie_m2": 152.3,
+          "capacidad_personas": 88,
+          "plazas_estacionamiento": 75,
+          "anio_construccion": 1983,
+          "salas": 22,
+          "esquematico_generado": true,
+          "archivo_esquematico": "754155_mock.pdf",
+          "fuente": "automatizacion OCR",
+          "ultima_actualizacion": "21/09/2026"
+        },
+        {
+          "codigo": "800814",
+          "direccion": "Av. Corrientes 3583, La Matanza",
+          "superficie_m2": 1180.9,
+          "capacidad_personas": 311,
+          "plazas_estacionamiento": 63,
+          "anio_construccion": 1982,
+          "salas": 14,
+          "esquematico_generado": true,
+          "archivo_esquematico": "800814_mock.pdf",
+          "fuente": "automatizacion OCR",
+          "ultima_actualizacion": "21/09/2026"
+        },
+        {
+          "codigo": "42251",
+          "direccion": "Av. Libertador 1136, Vicente Lopez",
+          "superficie_m2": 1221.4,
+          "capacidad_personas": 302,
+          "plazas_estacionamiento": 54,
+          "anio_construccion": 1985,
+          "salas": 13,
+          "esquematico_generado": true,
+          "archivo_esquematico": "42251_mock.pdf",
+          "fuente": "automatizacion OCR",
+          "ultima_actualizacion": "21/09/2026"
+        }
+      ]
+    }
+  },
+  "/api/properties/550482": {
+    "status": 200,
+    "body": {
+      "codigo": "550482",
+      "direccion": "Av. Belgrano 1827, Tigre",
+      "superficie_m2": 563.0,
+      "capacidad_personas": 64,
+      "plazas_estacionamiento": 6,
+      "anio_construccion": 2020,
+      "salas": 15,
+      "esquematico_generado": true,
+      "archivo_esquematico": "550482_mock.pdf",
+      "fuente": "automatizacion OCR",
+      "ultima_actualizacion": "21/09/2026"
+    }
+  },
+  "/api/properties/999999": {
+    "status": 404,
+    "body": {
+      "detail": "No existe la propiedad 999999 en target_system"
+    }
+  },
+  "/api/stats": {
+    "status": 200,
+    "body": {
+      "total": 20,
+      "pendientes": 0,
+      "corregidas": 20,
+      "superficie_total": 15930.3,
+      "capacidad_total": 3226
+    }
+  },
+  "/api/schematics/pending": {
+    "status": 200,
+    "body": {
+      "count": 0,
+      "items": []
+    }
+  },
+  "/api/compare": {
+    "status": 200,
+    "body": {
+      "total": 20,
+      "coinciden": 20,
+      "diferencias": 0,
+      "sin_datos": 0,
+      "exactitud_global": 100.0,
+      "propiedades_con_error": 0,
+      "per_field": [
+        {
+          "campo": "superficie_m2",
+          "exactitud": 100.0
+        },
+        {
+          "campo": "capacidad_personas",
+          "exactitud": 100.0
+        },
+        {
+          "campo": "plazas_estacionamiento",
+          "exactitud": 100.0
+        },
+        {
+          "campo": "anio_construccion",
+          "exactitud": 100.0
+        },
+        {
+          "campo": "salas",
+          "exactitud": 100.0
+        }
+      ],
+      "items": [
+        {
+          "codigo": "41376",
+          "status": "coincide",
+          "todas_correctas": true,
+          "fields": [
+            {
+              "campo": "superficie_m2",
+              "coinciden": true,
+              "ground_truth": 1118.7,
+              "ocr": 1118.7
+            },
+            {
+              "campo": "capacidad_personas",
+              "coinciden": true,
+              "ground_truth": 206.0,
+              "ocr": 206.0
+            },
+            {
+              "campo": "plazas_estacionamiento",
+              "coinciden": true,
+              "ground_truth": 69.0,
+              "ocr": 69.0
+            },
+            {
+              "campo": "anio_construccion",
+              "coinciden": true,
+              "ground_truth": 2015.0,
+              "ocr": 2015.0
+            },
+            {
+              "campo": "salas",
+              "coinciden": true,
+              "ground_truth": 6.0,
+              "ocr": 6.0
+            }
+          ]
+        },
+        {
+          "codigo": "42251",
+          "status": "coincide",
+          "todas_correctas": true,
+          "fields": [
+            {
+              "campo": "superficie_m2",
+              "coinciden": true,
+              "ground_truth": 1221.4,
+              "ocr": 1221.4
+            },
+            {
+              "campo": "capacidad_personas",
+              "coinciden": true,
+              "ground_truth": 302.0,
+              "ocr": 302.0
+            },
+            {
+              "campo": "plazas_estacionamiento",
+              "coinciden": true,
+              "ground_truth": 54.0,
+              "ocr": 54.0
+            },
+            {
+              "campo": "anio_construccion",
+              "coinciden": true,
+              "ground_truth": 1985.0,
+              "ocr": 1985.0
+            },
+            {
+              "campo": "salas",
+              "coinciden": true,
+              "ground_truth": 13.0,
+              "ocr": 13.0
+            }
+          ]
+        },
+        {
+          "codigo": "74654",
+          "status": "coincide",
+          "todas_correctas": true,
+          "fields": [
+            {
+              "campo": "superficie_m2",
+              "coinciden": true,
+              "ground_truth": 177.3,
+              "ocr": 177.3
+            },
+            {
+              "campo": "capacidad_personas",
+              "coinciden": true,
+              "ground_truth": 120.0,
+              "ocr": 120.0
+            },
+            {
+              "campo": "plazas_estacionamiento",
+              "coinciden": true,
+              "ground_truth": 50.0,
+              "ocr": 50.0
+            },
+            {
+              "campo": "anio_construccion",
+              "coinciden": true,
+              "ground_truth": 1981.0,
+              "ocr": 1981.0
+            },
+            {
+              "campo": "salas",
+              "coinciden": true,
+              "ground_truth": 21.0,
+              "ocr": 21.0
+            }
+          ]
+        },
+        {
+          "codigo": "239789",
+          "status": "coincide",
+          "todas_correctas": true,
+          "fields": [
+            {
+              "campo": "superficie_m2",
+              "coinciden": true,
+              "ground_truth": 1276.4,
+              "ocr": 1276.4
+            },
+            {
+              "campo": "capacidad_personas",
+              "coinciden": true,
+              "ground_truth": 118.0,
+              "ocr": 118.0
+            },
+            {
+              "campo": "plazas_estacionamiento",
+              "coinciden": true,
+              "ground_truth": 79.0,
+              "ocr": 79.0
+            },
+            {
+              "campo": "anio_construccion",
+              "coinciden": true,
+              "ground_truth": 1993.0,
+              "ocr": 1993.0
+            },
+            {
+              "campo": "salas",
+              "coinciden": true,
+              "ground_truth": 14.0,
+              "ocr": 14.0
+            }
+          ]
+        },
+        {
+          "codigo": "256587",
+          "status": "coincide",
+          "todas_correctas": true,
+          "fields": [
+            {
+              "campo": "superficie_m2",
+              "coinciden": true,
+              "ground_truth": 1283.5,
+              "ocr": 1283.5
+            },
+            {
+              "campo": "capacidad_personas",
+              "coinciden": true,
+              "ground_truth": 307.0,
+              "ocr": 307.0
+            },
+            {
+              "campo": "plazas_estacionamiento",
+              "coinciden": true,
+              "ground_truth": 20.0,
+              "ocr": 20.0
+            },
+            {
+              "campo": "anio_construccion",
+              "coinciden": true,
+              "ground_truth": 1975.0,
+              "ocr": 1975.0
+            },
+            {
+              "campo": "salas",
+              "coinciden": true,
+              "ground_truth": 9.0,
+              "ocr": 9.0
+            }
+          ]
+        },
+        {
+          "codigo": "267990",
+          "status": "coincide",
+          "todas_correctas": true,
+          "fields": [
+            {
+              "campo": "superficie_m2",
+              "coinciden": true,
+              "ground_truth": 487.2,
+              "ocr": 487.2
+            },
+            {
+              "campo": "capacidad_personas",
+              "coinciden": true,
+              "ground_truth": 98.0,
+              "ocr": 98.0
+            },
+            {
+              "campo": "plazas_estacionamiento",
+              "coinciden": true,
+              "ground_truth": 83.0,
+              "ocr": 83.0
+            },
+            {
+              "campo": "anio_construccion",
+              "coinciden": true,
+              "ground_truth": 1983.0,
+              "ocr": 1983.0
+            },
+            {
+              "campo": "salas",
+              "coinciden": true,
+              "ground_truth": 3.0,
+              "ocr": 3.0
+            }
+          ]
+        },
+        {
+          "codigo": "307022",
+          "status": "coincide",
+          "todas_correctas": true,
+          "fields": [
+            {
+              "campo": "superficie_m2",
+              "coinciden": true,
+              "ground_truth": 1323.0,
+              "ocr": 1323.0
+            },
+            {
+              "campo": "capacidad_personas",
+              "coinciden": true,
+              "ground_truth": 259.0,
+              "ocr": 259.0
+            },
+            {
+              "campo": "plazas_estacionamiento",
+              "coinciden": true,
+              "ground_truth": 28.0,
+              "ocr": 28.0
+            },
+            {
+              "campo": "anio_construccion",
+              "coinciden": true,
+              "ground_truth": 1970.0,
+              "ocr": 1970.0
+            },
+            {
+              "campo": "salas",
+              "coinciden": true,
+              "ground_truth": 2.0,
+              "ocr": 2.0
+            }
+          ]
+        },
+        {
+          "codigo": "371851",
+          "status": "coincide",
+          "todas_correctas": true,
+          "fields": [
+            {
+              "campo": "superficie_m2",
+              "coinciden": true,
+              "ground_truth": 521.3,
+              "ocr": 521.3
+            },
+            {
+              "campo": "capacidad_personas",
+              "coinciden": true,
+              "ground_truth": 189.0,
+              "ocr": 189.0
+            },
+            {
+              "campo": "plazas_estacionamiento",
+              "coinciden": true,
+              "ground_truth": 72.0,
+              "ocr": 72.0
+            },
+            {
+              "campo": "anio_construccion",
+              "coinciden": true,
+              "ground_truth": 2004.0,
+              "ocr": 2004.0
+            },
+            {
+              "campo": "salas",
+              "coinciden": true,
+              "ground_truth": 5.0,
+              "ocr": 5.0
+            }
+          ]
+        },
+        {
+          "codigo": "549312",
+          "status": "coincide",
+          "todas_correctas": true,
+          "fields": [
+            {
+              "campo": "superficie_m2",
+              "coinciden": true,
+              "ground_truth": 1272.6,
+              "ocr": 1272.6
+            },
+            {
+              "campo": "capacidad_personas",
+              "coinciden": true,
+              "ground_truth": 34.0,
+              "ocr": 34.0
+            },
+            {
+              "campo": "plazas_estacionamiento",
+              "coinciden": true,
+              "ground_truth": 55.0,
+              "ocr": 55.0
+            },
+            {
+              "campo": "anio_construccion",
+              "coinciden": true,
+              "ground_truth": 2013.0,
+              "ocr": 2013.0
+            },
+            {
+              "campo": "salas",
+              "coinciden": true,
+              "ground_truth": 20.0,
+              "ocr": 20.0
+            }
+          ]
+        },
+        {
+          "codigo": "550482",
+          "status": "coincide",
+          "todas_correctas": true,
+          "fields": [
+            {
+              "campo": "superficie_m2",
+              "coinciden": true,
+              "ground_truth": 563.0,
+              "ocr": 563.0
+            },
+            {
+              "campo": "capacidad_personas",
+              "coinciden": true,
+              "ground_truth": 64.0,
+              "ocr": 64.0
+            },
+            {
+              "campo": "plazas_estacionamiento",
+              "coinciden": true,
+              "ground_truth": 6.0,
+              "ocr": 6.0
+            },
+            {
+              "campo": "anio_construccion",
+              "coinciden": true,
+              "ground_truth": 2020.0,
+              "ocr": 2020.0
+            },
+            {
+              "campo": "salas",
+              "coinciden": true,
+              "ground_truth": 15.0,
+              "ocr": 15.0
+            }
+          ]
+        },
+        {
+          "codigo": "584445",
+          "status": "coincide",
+          "todas_correctas": true,
+          "fields": [
+            {
+              "campo": "superficie_m2",
+              "coinciden": true,
+              "ground_truth": 446.7,
+              "ocr": 446.7
+            },
+            {
+              "campo": "capacidad_personas",
+              "coinciden": true,
+              "ground_truth": 61.0,
+              "ocr": 61.0
+            },
+            {
+              "campo": "plazas_estacionamiento",
+              "coinciden": true,
+              "ground_truth": 58.0,
+              "ocr": 58.0
+            },
+            {
+              "campo": "anio_construccion",
+              "coinciden": true,
+              "ground_truth": 1985.0,
+              "ocr": 1985.0
+            },
+            {
+              "campo": "salas",
+              "coinciden": true,
+              "ground_truth": 24.0,
+              "ocr": 24.0
+            }
+          ]
+        },
+        {
+          "codigo": "699807",
+          "status": "coincide",
+          "todas_correctas": true,
+          "fields": [
+            {
+              "campo": "superficie_m2",
+              "coinciden": true,
+              "ground_truth": 1054.8,
+              "ocr": 1054.8
+            },
+            {
+              "campo": "capacidad_personas",
+              "coinciden": true,
+              "ground_truth": 189.0,
+              "ocr": 189.0
+            },
+            {
+              "campo": "plazas_estacionamiento",
+              "coinciden": true,
+              "ground_truth": 51.0,
+              "ocr": 51.0
+            },
+            {
+              "campo": "anio_construccion",
+              "coinciden": true,
+              "ground_truth": 2012.0,
+              "ocr": 2012.0
+            },
+            {
+              "campo": "salas",
+              "coinciden": true,
+              "ground_truth": 9.0,
+              "ocr": 9.0
+            }
+          ]
+        },
+        {
+          "codigo": "713065",
+          "status": "coincide",
+          "todas_correctas": true,
+          "fields": [
+            {
+              "campo": "superficie_m2",
+              "coinciden": true,
+              "ground_truth": 217.0,
+              "ocr": 217.0
+            },
+            {
+              "campo": "capacidad_personas",
+              "coinciden": true,
+              "ground_truth": 94.0,
+              "ocr": 94.0
+            },
+            {
+              "campo": "plazas_estacionamiento",
+              "coinciden": true,
+              "ground_truth": 23.0,
+              "ocr": 23.0
+            },
+            {
+              "campo": "anio_construccion",
+              "coinciden": true,
+              "ground_truth": 1969.0,
+              "ocr": 1969.0
+            },
+            {
+              "campo": "salas",
+              "coinciden": true,
+              "ground_truth": 17.0,
+              "ocr": 17.0
+            }
+          ]
+        },
+        {
+          "codigo": "754155",
+          "status": "coincide",
+          "todas_correctas": true,
+          "fields": [
+            {
+              "campo": "superficie_m2",
+              "coinciden": true,
+              "ground_truth": 152.3,
+              "ocr": 152.3
+            },
+            {
+              "campo": "capacidad_personas",
+              "coinciden": true,
+              "ground_truth": 88.0,
+              "ocr": 88.0
+            },
+            {
+              "campo": "plazas_estacionamiento",
+              "coinciden": true,
+              "ground_truth": 75.0,
+              "ocr": 75.0
+            },
+            {
+              "campo": "anio_construccion",
+              "coinciden": true,
+              "ground_truth": 1983.0,
+              "ocr": 1983.0
+            },
+            {
+              "campo": "salas",
+              "coinciden": true,
+              "ground_truth": 22.0,
+              "ocr": 22.0
+            }
+          ]
+        },
+        {
+          "codigo": "768904",
+          "status": "coincide",
+          "todas_correctas": true,
+          "fields": [
+            {
+              "campo": "superficie_m2",
+              "coinciden": true,
+              "ground_truth": 186.1,
+              "ocr": 186.1
+            },
+            {
+              "campo": "capacidad_personas",
+              "coinciden": true,
+              "ground_truth": 319.0,
+              "ocr": 319.0
+            },
+            {
+              "campo": "plazas_estacionamiento",
+              "coinciden": true,
+              "ground_truth": 85.0,
+              "ocr": 85.0
+            },
+            {
+              "campo": "anio_construccion",
+              "coinciden": true,
+              "ground_truth": 1961.0,
+              "ocr": 1961.0
+            },
+            {
+              "campo": "salas",
+              "coinciden": true,
+              "ground_truth": 15.0,
+              "ocr": 15.0
+            }
+          ]
+        },
+        {
+          "codigo": "800814",
+          "status": "coincide",
+          "todas_correctas": true,
+          "fields": [
+            {
+              "campo": "superficie_m2",
+              "coinciden": true,
+              "ground_truth": 1180.9,
+              "ocr": 1180.9
+            },
+            {
+              "campo": "capacidad_personas",
+              "coinciden": true,
+              "ground_truth": 311.0,
+              "ocr": 311.0
+            },
+            {
+              "campo": "plazas_estacionamiento",
+              "coinciden": true,
+              "ground_truth": 63.0,
+              "ocr": 63.0
+            },
+            {
+              "campo": "anio_construccion",
+              "coinciden": true,
+              "ground_truth": 1982.0,
+              "ocr": 1982.0
+            },
+            {
+              "campo": "salas",
+              "coinciden": true,
+              "ground_truth": 14.0,
+              "ocr": 14.0
+            }
+          ]
+        },
+        {
+          "codigo": "814659",
+          "status": "coincide",
+          "todas_correctas": true,
+          "fields": [
+            {
+              "campo": "superficie_m2",
+              "coinciden": true,
+              "ground_truth": 1345.2,
+              "ocr": 1345.2
+            },
+            {
+              "campo": "capacidad_personas",
+              "coinciden": true,
+              "ground_truth": 178.0,
+              "ocr": 178.0
+            },
+            {
+              "campo": "plazas_estacionamiento",
+              "coinciden": true,
+              "ground_truth": 12.0,
+              "ocr": 12.0
+            },
+            {
+              "campo": "anio_construccion",
+              "coinciden": true,
+              "ground_truth": 2005.0,
+              "ocr": 2005.0
+            },
+            {
+              "campo": "salas",
+              "coinciden": true,
+              "ground_truth": 12.0,
+              "ocr": 12.0
+            }
+          ]
+        },
+        {
+          "codigo": "851040",
+          "status": "coincide",
+          "todas_correctas": true,
+          "fields": [
+            {
+              "campo": "superficie_m2",
+              "coinciden": true,
+              "ground_truth": 627.8,
+              "ocr": 627.8
+            },
+            {
+              "campo": "capacidad_personas",
+              "coinciden": true,
+              "ground_truth": 162.0,
+              "ocr": 162.0
+            },
+            {
+              "campo": "plazas_estacionamiento",
+              "coinciden": true,
+              "ground_truth": 5.0,
+              "ocr": 5.0
+            },
+            {
+              "campo": "anio_construccion",
+              "coinciden": true,
+              "ground_truth": 2019.0,
+              "ocr": 2019.0
+            },
+            {
+              "campo": "salas",
+              "coinciden": true,
+              "ground_truth": 24.0,
+              "ocr": 24.0
+            }
+          ]
+        },
+        {
+          "codigo": "923643",
+          "status": "coincide",
+          "todas_correctas": true,
+          "fields": [
+            {
+              "campo": "superficie_m2",
+              "coinciden": true,
+              "ground_truth": 127.3,
+              "ocr": 127.3
+            },
+            {
+              "campo": "capacidad_personas",
+              "coinciden": true,
+              "ground_truth": 89.0,
+              "ocr": 89.0
+            },
+            {
+              "campo": "plazas_estacionamiento",
+              "coinciden": true,
+              "ground_truth": 48.0,
+              "ocr": 48.0
+            },
+            {
+              "campo": "anio_construccion",
+              "coinciden": true,
+              "ground_truth": 1957.0,
+              "ocr": 1957.0
+            },
+            {
+              "campo": "salas",
+              "coinciden": true,
+              "ground_truth": 15.0,
+              "ocr": 15.0
+            }
+          ]
+        },
+        {
+          "codigo": "982505",
+          "status": "coincide",
+          "todas_correctas": true,
+          "fields": [
+            {
+              "campo": "superficie_m2",
+              "coinciden": true,
+              "ground_truth": 1347.8,
+              "ocr": 1347.8
+            },
+            {
+              "campo": "capacidad_personas",
+              "coinciden": true,
+              "ground_truth": 38.0,
+              "ocr": 38.0
+            },
+            {
+              "campo": "plazas_estacionamiento",
+              "coinciden": true,
+              "ground_truth": 69.0,
+              "ocr": 69.0
+            },
+            {
+              "campo": "anio_construccion",
+              "coinciden": true,
+              "ground_truth": 1974.0,
+              "ocr": 1974.0
+            },
+            {
+              "campo": "salas",
+              "coinciden": true,
+              "ground_truth": 8.0,
+              "ocr": 8.0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "/api/automation/preview": {
+    "status": 200,
+    "body": {
+      "total_properties": 20,
+      "properties_with_changes": 0,
+      "total_changes": 0,
+      "items": []
+    }
+  },
+  "/api/ocr/status": {
+    "status": 200,
+    "body": {
+      "estado": "completado",
+      "total_esquematicos": 20,
+      "procesados": 20,
+      "pendientes": 0
+    }
+  },
+  "/api/ocr/results": {
+    "status": 200,
+    "body": {
+      "count": 20,
+      "items": [
+        {
+          "codigo": "239789",
+          "archivo": "239789_mock.pdf",
+          "direccion": "Av. Rivadavia 4267, Tigre",
+          "fecha_relevamiento": "21/09/2026",
+          "superficie_m2": 1276.4,
+          "capacidad_personas": 118,
+          "plazas_estacionamiento": 79,
+          "anio_construccion": 1993,
+          "salas": 14,
+          "error": null
+        },
+        {
+          "codigo": "256587",
+          "archivo": "256587_mock.pdf",
+          "direccion": "Av. Libertador 4150, San Miguel",
+          "fecha_relevamiento": "21/09/2026",
+          "superficie_m2": 1283.5,
+          "capacidad_personas": 307,
+          "plazas_estacionamiento": 20,
+          "anio_construccion": 1975,
+          "salas": 9,
+          "error": null
+        },
+        {
+          "codigo": "267990",
+          "archivo": "267990_mock.pdf",
+          "direccion": "Calle Mitre 864, Tigre",
+          "fecha_relevamiento": "21/09/2026",
+          "superficie_m2": 487.2,
+          "capacidad_personas": 98,
+          "plazas_estacionamiento": 83,
+          "anio_construccion": 1983,
+          "salas": 3,
+          "error": null
+        },
+        {
+          "codigo": "371851",
+          "archivo": "371851_mock.pdf",
+          "direccion": "Calle Sarmiento 3081, La Matanza",
+          "fecha_relevamiento": "21/09/2026",
+          "superficie_m2": 521.3,
+          "capacidad_personas": 189,
+          "plazas_estacionamiento": 72,
+          "anio_construccion": 2004,
+          "salas": 5,
+          "error": null
+        },
+        {
+          "codigo": "41376",
+          "archivo": "41376_mock.pdf",
+          "direccion": "Av. Corrientes 2450, Vicente Lopez",
+          "fecha_relevamiento": "21/09/2026",
+          "superficie_m2": 1118.7,
+          "capacidad_personas": 206,
+          "plazas_estacionamiento": 69,
+          "anio_construccion": 2015,
+          "salas": 6,
+          "error": null
+        },
+        {
+          "codigo": "307022",
+          "archivo": "307022_mock.pdf",
+          "direccion": "Av. Rivadavia 2651, Quilmes",
+          "fecha_relevamiento": "21/09/2026",
+          "superficie_m2": 1323.0,
+          "capacidad_personas": 259,
+          "plazas_estacionamiento": 28,
+          "anio_construccion": 1970,
+          "salas": 2,
+          "error": null
+        },
+        {
+          "codigo": "42251",
+          "archivo": "42251_mock.pdf",
+          "direccion": "Av. Libertador 1136, Vicente Lopez",
+          "fecha_relevamiento": "21/09/2026",
+          "superficie_m2": 1221.4,
+          "capacidad_personas": 302,
+          "plazas_estacionamiento": 54,
+          "anio_construccion": 1985,
+          "salas": 13,
+          "error": null
+        },
+        {
+          "codigo": "550482",
+          "archivo": "550482_mock.pdf",
+          "direccion": "Av. Belgrano 1827, Tigre",
+          "fecha_relevamiento": "21/09/2026",
+          "superficie_m2": 563.0,
+          "capacidad_personas": 64,
+          "plazas_estacionamiento": 6,
+          "anio_construccion": 2020,
+          "salas": 15,
+          "error": null
+        },
+        {
+          "codigo": "549312",
+          "archivo": "549312_mock.pdf",
+          "direccion": "Av. Belgrano 4209, San Isidro",
+          "fecha_relevamiento": "21/09/2026",
+          "superficie_m2": 1272.6,
+          "capacidad_personas": 34,
+          "plazas_estacionamiento": 55,
+          "anio_construccion": 2013,
+          "salas": 20,
+          "error": null
+        },
+        {
+          "codigo": "584445",
+          "archivo": "584445_mock.pdf",
+          "direccion": "Av. San Martin 1671, Lomas de Zamora",
+          "fecha_relevamiento": "21/09/2026",
+          "superficie_m2": 446.7,
+          "capacidad_personas": 61,
+          "plazas_estacionamiento": 58,
+          "anio_construccion": 1985,
+          "salas": 24,
+          "error": null
+        },
+        {
+          "codigo": "699807",
+          "archivo": "699807_mock.pdf",
+          "direccion": "Calle Moreno 2043, Moron",
+          "fecha_relevamiento": "21/09/2026",
+          "superficie_m2": 1054.8,
+          "capacidad_personas": 189,
+          "plazas_estacionamiento": 51,
+          "anio_construccion": 2012,
+          "salas": 9,
+          "error": null
+        },
+        {
+          "codigo": "713065",
+          "archivo": "713065_mock.pdf",
+          "direccion": "Av. Libertador 4547, Lomas de Zamora",
+          "fecha_relevamiento": "21/09/2026",
+          "superficie_m2": 217.0,
+          "capacidad_personas": 94,
+          "plazas_estacionamiento": 23,
+          "anio_construccion": 1969,
+          "salas": 17,
+          "error": null
+        },
+        {
+          "codigo": "754155",
+          "archivo": "754155_mock.pdf",
+          "direccion": "Av. Libertador 1491, Quilmes",
+          "fecha_relevamiento": "21/09/2026",
+          "superficie_m2": 152.3,
+          "capacidad_personas": 88,
+          "plazas_estacionamiento": 75,
+          "anio_construccion": 1983,
+          "salas": 22,
+          "error": null
+        },
+        {
+          "codigo": "74654",
+          "archivo": "74654_mock.pdf",
+          "direccion": "Av. Corrientes 3353, Lomas de Zamora",
+          "fecha_relevamiento": "21/09/2026",
+          "superficie_m2": 177.3,
+          "capacidad_personas": 120,
+          "plazas_estacionamiento": 50,
+          "anio_construccion": 1981,
+          "salas": 21,
+          "error": null
+        },
+        {
+          "codigo": "768904",
+          "archivo": "768904_mock.pdf",
+          "direccion": "Av. Libertador 3663, Moron",
+          "fecha_relevamiento": "21/09/2026",
+          "superficie_m2": 186.1,
+          "capacidad_personas": 319,
+          "plazas_estacionamiento": 85,
+          "anio_construccion": 1961,
+          "salas": 15,
+          "error": null
+        },
+        {
+          "codigo": "800814",
+          "archivo": "800814_mock.pdf",
+          "direccion": "Av. Corrientes 3583, La Matanza",
+          "fecha_relevamiento": "21/09/2026",
+          "superficie_m2": 1180.9,
+          "capacidad_personas": 311,
+          "plazas_estacionamiento": 63,
+          "anio_construccion": 1982,
+          "salas": 14,
+          "error": null
+        },
+        {
+          "codigo": "851040",
+          "archivo": "851040_mock.pdf",
+          "direccion": "Av. Corrientes 4978, Vicente Lopez",
+          "fecha_relevamiento": "21/09/2026",
+          "superficie_m2": 627.8,
+          "capacidad_personas": 162,
+          "plazas_estacionamiento": 5,
+          "anio_construccion": 2019,
+          "salas": 24,
+          "error": null
+        },
+        {
+          "codigo": "814659",
+          "archivo": "814659_mock.pdf",
+          "direccion": "Calle Moreno 4346, San Isidro",
+          "fecha_relevamiento": "21/09/2026",
+          "superficie_m2": 1345.2,
+          "capacidad_personas": 178,
+          "plazas_estacionamiento": 12,
+          "anio_construccion": 2005,
+          "salas": 12,
+          "error": null
+        },
+        {
+          "codigo": "982505",
+          "archivo": "982505_mock.pdf",
+          "direccion": "Av. Rivadavia 2352, Moron",
+          "fecha_relevamiento": "21/09/2026",
+          "superficie_m2": 1347.8,
+          "capacidad_personas": 38,
+          "plazas_estacionamiento": 69,
+          "anio_construccion": 1974,
+          "salas": 8,
+          "error": null
+        },
+        {
+          "codigo": "923643",
+          "archivo": "923643_mock.pdf",
+          "direccion": "Av. Libertador 3660, Vicente Lopez",
+          "fecha_relevamiento": "21/09/2026",
+          "superficie_m2": 127.3,
+          "capacidad_personas": 89,
+          "plazas_estacionamiento": 48,
+          "anio_construccion": 1957,
+          "salas": 15,
+          "error": null
+        }
+      ]
+    }
+  }
+}
