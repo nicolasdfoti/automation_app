@@ -33,6 +33,8 @@ def _norm_codes(series) -> set[str]:
 def compare_summary() -> dict:
     gt = db.read_ground_truth()
     ocr = db.read_ocr_output()
+    if not ocr.empty:
+        ocr = ocr.drop_duplicates("codigo", keep="last")
 
     campos = db.NUMERIC_FIELDS
     if gt.empty or ocr.empty:
