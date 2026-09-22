@@ -179,11 +179,13 @@ class PlaywrightAutomationRequest(BaseModel):
     Only the property code (and optionally the field) is accepted; the value
     the browser writes is recomputed server-side from the stored files. When
     ``field`` is omitted, every pending field of the property is corrected in
-    one browser session.
+    one browser session. ``headless`` overrides the module default
+    (``PLAYWRIGHT_HEADLESS``) for this run.
     """
 
     codigo: str
     field: str | None = None
+    headless: bool | None = None
 
 
 class PlaywrightChangeResult(BaseModel):
@@ -218,4 +220,38 @@ class PlaywrightAutomationResult(BaseModel):
     changes: list[PlaywrightChangeResult] = []
     stage: str | None = None
     error: str | None = None
+    steps: list[str] = []
+
+
+class PlaywrightAutomationBatchRequest(BaseModel):
+    """Run several corrections in ONE browser session.
+
+    Only the property codes (and optionally a single field filter) are
+    accepted; every value the browser writes is recomputed server-side from the
+    stored files. A single Chromium instance is opened at the start of the run
+    and closed when every code has been processed. ``headless`` overrides the
+    module default (``PLAYWRIGHT_HEADLESS``) for this run.
+    """
+
+    codigos: list[str] = Field(min_length=1, max_length=500)
+    field: str | None = None
+    headless: bool | None = None
+
+
+class PlaywrightAutomationBatchResult(BaseModel):
+    """Aggregated outcome of a multi-property browser automation run.
+
+    ``results`` keeps the per-property detail in the requested order (codes
+    with nothing to correct are included as ``stage='no_change'``). ``steps``
+    records the browser lifecycle at the run level (single launch + single
+    close), while each ``PlaywrightAutomationResult.steps`` holds the
+    per-property navigation/edit/save/verify trace.
+    """
+
+    success: bool
+    total: int
+    corrected: int
+    failed: int
+    without_changes: int = 0
+    results: list[PlaywrightAutomationResult]
     steps: list[str] = []

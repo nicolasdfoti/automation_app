@@ -15,6 +15,8 @@ from fastapi import APIRouter, HTTPException
 from automation_system.backend.schemas import (
     AutomationApplyResult,
     AutomationPreview,
+    PlaywrightAutomationBatchRequest,
+    PlaywrightAutomationBatchResult,
     PlaywrightAutomationRequest,
     PlaywrightAutomationResult,
 )
@@ -47,7 +49,7 @@ def playwright(payload: PlaywrightAutomationRequest) -> PlaywrightAutomationResu
     valores enviados por el browser y nunca escribe Excel como fallback.
     """
     try:
-        result = playwright_svc.apply_correction(payload.codigo, payload.field)
+        result = playwright_svc.apply_correction(payload.codigo, payload.field, headless=payload.headless)
     except ValueError as exc:
         # Invalid field (422) or missing property (404) — same conventions as
         # the target properties endpoints.
@@ -55,3 +57,27 @@ def playwright(payload: PlaywrightAutomationRequest) -> PlaywrightAutomationResu
             raise HTTPException(status_code=422, detail=str(exc))
         raise HTTPException(status_code=404, detail=str(exc))
     return PlaywrightAutomationResult(**result)
+
+
+@router.post("/playwright/batch", response_model=PlaywrightAutomationBatchResult)
+def playwright_batch(
+    payload: PlaywrightAutomationBatchRequest,
+) -> PlaywrightAutomationBatchResult:
+    """Automatizar varias propiedades en UNA sesion de browser persistente.
+
+    Para toda la corrida se abre UNA sola ventana de Chromium (visible por
+    defecto) que se reutiliza para cada propiedad: navegacion, edicion, guardado
+    y verificacion por propiedad en la misma pestaña/contexto. El browser se
+    cierra una unica vez al terminar. ``field`` opcional limita la correccion a
+    un solo campo; sin el, se corrigen todos los campos pendientes de cada
+    propiedad. Sin cambios pendientes -> resultado ``no_change`` sin abrir
+    browser. Valores siempre recomputados server-side, nunca credos del
+    browser, y sin escritura directa de Excel.
+    """
+    try:
+        result = playwright_svc.apply_corrections(payload.codigos, payload.field, headless=payload.headless)
+    except ValueError as exc:
+        if "Campo no automatizable" in str(exc) or "al menos un codigo" in str(exc):
+            raise HTTPException(status_code=422, detail=str(exc))
+        raise HTTPException(status_code=404, detail=str(exc))
+    return PlaywrightAutomationBatchResult(**result)

@@ -9,7 +9,7 @@ import {
   Workflow,
 } from "lucide-react";
 import { ApiError } from "../api/client";
-import { automateWithPlaywright, fetchAutomationPreview } from "../api/automation";
+import { automateWithPlaywright, fetchAutomationPreview, runPlaywrightBatch } from "../api/automation";
 import { fetchOcrStatus } from "../api/ocr";
 import PageHeader from "../components/ui/PageHeader";
 import SectionCard from "../components/ui/SectionCard";
@@ -169,21 +169,25 @@ export default function AutomationPage() {
     setRunning(true);
     setFeedback(null);
     setResultRows([]);
+    const items = data?.items ?? [];
     const rows: ResultRow[] = [];
     let errored = 0;
-    for (const item of data?.items ?? []) {
-      try {
-        const result = await automateWithPlaywright(item.codigo);
-        if (!result.success) errored += 1;
+    try {
+      // One "run": the backend opens a single Chromium window and reuses it
+      // for every correction before closing it at the end.
+      const batch = await runPlaywrightBatch(items.map((it) => it.codigo));
+      for (const result of batch.results) {
+        const noChange = result.stage === "no_change";
+        if (!result.success && !noChange) errored += 1;
         rows.push(...flattenChanges(result));
-      } catch {
-        errored += 1;
       }
+    } catch {
+      errored = Math.max(1, items.length);
     }
     setResultRows(rows);
     if (rows.length === 0) {
       setFeedback({
-        kind: errored === 0 ? "error" : "error",
+        kind: "error",
         text: errored === 0
           ? "No se corrigió ningún campo (sin cambios pendientes)."
           : `No se pudo completar ninguna automatización (${errored} ejecuciones fallidas).`,
@@ -193,8 +197,8 @@ export default function AutomationPage() {
       const verified = rows.filter((r) => r.verified).length;
       setFeedback({
         kind: errored === 0 && verified === rows.length ? "success" : "error",
-        text: `Automatización por browser — ${verified}/${rows.length} campos verificados en ${properties} propiedad${properties === 1 ? "" : "es"}` +
-          (errored > 0 ? `, ${errored} ejecución(es) con error.` : " sobre la UI real de Target."),
+        text: `Automatización por browser — ${verified}/${rows.length} campos verificados en ${properties} propiedad${properties === 1 ? "" : "es"} con una sola ventana de Chromium` +
+          (errored > 0 ? `, ${errored} corrección(es) con error.` : " sobre la UI real de Target."),
       });
     }
     setRunning(false);
@@ -296,7 +300,7 @@ export default function AutomationPage() {
     <>
       <PageHeader
         title="Automatizar"
-        subtitle="Revisá las diferencias detectadas por el OCR contra los datos actuales. La corrección se aplica por el navegador real de Target (visible), editando y guardando la propiedad en su UI."
+        subtitle="Revisá las diferencias detectadas por el OCR contra los datos actuales. La corrección se aplica por el navegador real de Target (visible), que se abre una sola vez y se reutiliza para toda la corrida: edita y guarda cada propiedad en su UI antes de cerrarse."
         actions={
           <Button
             icon={<Sparkles size={16} aria-hidden="true" />}
@@ -405,12 +409,13 @@ export default function AutomationPage() {
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
         title="Automatizar todas las correcciones"
-        description="Se abre el navegador real de Target (http://127.0.0.1:5173) una vez por propiedad con correcciones pendientes."
+        description="Se abre el navegador real de Target (http://127.0.0.1:5173) una sola vez y se reutiliza para todas las correcciones de la corrida."
       >
         <p className="text-sm text-slate-600">
           Se corregirán <strong className="text-slate-900">{withChanges} propiedades</strong> y{" "}
-          <strong className="text-slate-900">{changes} campos</strong> editando y guardando cada propiedad en la UI de
-          Target. Podés ver la ventana del navegador mientras el proceso avanza.
+          <strong className="text-slate-900">{changes} campos</strong> en una única ventana de Chromium: edición y
+          guardado de cada propiedad en la UI de Target, y cierre del navegador al terminar. Podés ver la ventana
+          mientras el proceso avanza.
         </p>
         <p className="mt-2 text-sm text-slate-500">
           Los valores los recomputa el backend desde los archivos autoridad: no se confía en el browser y nunca se

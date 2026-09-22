@@ -44,13 +44,21 @@ Variables de entorno (Automation):
 - `PLAYWRIGHT_HEADLESS` — `1` para headless (CI/test), `0` (default) para browser visible.
 - `PLAYWRIGHT_STEP_DELAY_MS` — pausa visible entre pasos en modo headed (default `750`; `0` desactiva).
 
+> Nota: `PLAYWRIGHT_HEADLESS` se lee al importar el modulo. Tambien puedes
+> forzarlo por corrida con `"headless": true/false` en el cuerpo de la peticion
+> (`/api/automation/playwright` y `/api/automation/playwright/batch`), sin
+> depender de una variable de entorno del proceso.
+
 Playwright (visible, headed): se abre el navegador real de Target
 (`http://127.0.0.1:5173/propiedades/{codigo}`), se edita y guarda la propiedad
-por su UI y se verifica recargando el detalle. Desde la UI de Automation
-(:5174, pagina Automatizar), el boton "Automatizar" de cada fila o
-"Automatizar todas" dispara este flujo (nunca una escritura directa de Excel).
-Requerimientos de runtime: UI de target arriba (`5173`) + backend de target
-(`8000`) + backend de automation (`8001`). Ejemplo directo por API:
+por su UI y se verifica recargando el detalle. Ciclo de vida persistente: para
+toda una corrida se abre **una sola instancia de Chromium** al inicio, se
+reutiliza (misma pagina) para corregir varias propiedades/campos y se cierra
+una sola vez al terminar. Desde la UI de Automation (:5174, pagina Automatizar),
+el boton "Automatizar" de cada fila o "Automatizar todas" dispara este flujo
+(nunca una escritura directa de Excel). Requerimientos de runtime: UI de target
+arriba (`5173`) + backend de target (`8000`) + backend de automation (`8001`).
+Ejemplo directo por API:
 
 ```bash
 # sin "field": corrige todos los campos pendientes de la propiedad (una sesion)
@@ -62,6 +70,16 @@ curl -X POST http://127.0.0.1:8001/api/automation/playwright \
 curl -X POST http://127.0.0.1:8001/api/automation/playwright \
   -H 'Content-Type: application/json' \
   -d '{"codigo":"877597","field":"superficie_m2"}'
+
+# varias propiedades en UNA corrida (una sola ventana de Chromium)
+curl -X POST http://127.0.0.1:8001/api/automation/playwright/batch \
+  -H 'Content-Type: application/json' \
+  -d '{"codigos":["877597","638412"]}'
+
+# modo rapido headless por corrida (sin ventana, sin pausas visibles)
+curl -X POST http://127.0.0.1:8001/api/automation/playwright/batch \
+  -H 'Content-Type: application/json' \
+  -d '{"codigos":["877597","638412"],"headless":true}'
 ```
 
 ## Tests

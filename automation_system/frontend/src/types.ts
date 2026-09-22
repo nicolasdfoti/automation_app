@@ -158,3 +158,13 @@ export interface PlaywrightAutomationResult {
   error: string | null;
   steps: string[];
 }
+
+export interface PlaywrightAutomationBatchResult {
+  success: boolean;
+  total: number;
+  corrected: number;
+  failed: number;
+  without_changes: number;
+  results: PlaywrightAutomationResult[];
+  steps: string[];
+}

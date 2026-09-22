@@ -65,7 +65,7 @@ def restore() -> None:
 
 
 def run_checks() -> None:
-    # --- 1. endpoint exists -------------------------------------------------
+    # --- 1. single endpoint exists ------------------------------------------
     r = client.post("/api/automation/playwright", json={})
     assert r.status_code == 422, r.text  # route exists: pydantic validation fires
     print("[ok] endpoint POST /api/automation/playwright existe (validacion 422)")
@@ -90,6 +90,42 @@ def run_checks() -> None:
     assert result["success"] is False and result["stage"] == "no_change", result
     assert result["steps"] == []
     print("[ok] sin cambios -> escenario no_change (sin abrir browser)")
+
+    # --- 5. batch endpoint exists -------------------------------------------
+    r = client.post("/api/automation/playwright/batch", json={})
+    assert r.status_code == 422, r.text  # route exists: pydantic fires
+    r = client.post("/api/automation/playwright/batch", json={"codigos": []})
+    assert r.status_code == 422, r.text
+    print("[ok] endpoint POST /api/automation/playwright/batch existe (422 sin codigos)")
+
+    # --- 6. batch invalid field rejected (422) -------------------------------
+    r = client.post("/api/automation/playwright/batch", json={"codigos": [TARGET_CODIGO], "field": "direccion"})
+    assert r.status_code == 422, r.text
+    print("[ok] batch field invalido rechazado (status=%s)" % r.status_code)
+
+    # --- 7. batch missing property rejected (404) ----------------------------
+    r = client.post("/api/automation/playwright/batch", json={"codigos": ["999999"]})
+    assert r.status_code == 404, r.text
+    print("[ok] batch propiedad inexistente rechazada (status=%s)" % r.status_code)
+
+    # --- 8. batch no-change: no browser, every result no_change --------------
+    batch = pw_svc.apply_corrections([TARGET_CODIGO], FIELD)
+    assert batch["steps"] == [], batch
+    assert batch["success"] is False and batch["failed"] == 0, batch
+    assert len(batch["results"]) == 1
+    assert batch["results"][0]["stage"] == "no_change", batch["results"]
+    print("[ok] batch sin cambios -> no_change por propiedad, browser nunca abierto")
+
+    # --- 9. headless override accepted ---------------------------------------
+    batch_h = pw_svc.apply_corrections([TARGET_CODIGO], FIELD, headless=True)
+    assert batch_h["steps"] == [] and batch_h["results"][0]["stage"] == "no_change"
+    r = client.post(
+        "/api/automation/playwright/batch",
+        json={"codigos": [TARGET_CODIGO], "headless": True},
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["results"][0]["stage"] == "no_change"
+    print("[ok] headless override aceptado en servicio y API (no_change, sin browser)")
 
 
 def main() -> None:
