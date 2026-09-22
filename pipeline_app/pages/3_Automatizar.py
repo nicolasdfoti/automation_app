@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from shared_store import db
 import ui
 
-from backend.services.automation import (
+from automation_system.backend.services.automation import (
     already_automated_codes,
     apply_corrections,
     build_preview,

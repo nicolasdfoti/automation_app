@@ -8,7 +8,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from shared_store import db
 import ui
 
-from backend.services.compare import compute_comparison
+from automation_system.backend.services.compare import compute_comparison
 
 st.set_page_config(page_title="Comparar — Demo", page_icon="\U0001F50E", layout="wide")
 ui.inject_css()

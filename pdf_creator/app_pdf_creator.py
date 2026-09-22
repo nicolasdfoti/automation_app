@@ -7,7 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from shared_store import db
 from pdf_creator import generator, schema
 
-from backend.services.schematics import build_numeric_overrides
+from automation_system.backend.services.schematics import build_numeric_overrides
 
 st.set_page_config(page_title="Generador de Esquematicos", page_icon="\U0001F4C4", layout="wide")
 
