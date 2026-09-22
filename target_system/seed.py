@@ -1,8 +1,11 @@
 """
 Siembra propiedades en target_system con datos "legacy": existen de
 antes, tienen codigo y direccion validos, pero los campos tecnicos
-estan desactualizados o directamente mal (simula una carga manual
-vieja) — es lo que despues la automatizacion va a corregir.
+estan desactualizados o cargados con imprecision (simula una carga
+manual vieja). El valor REAL de cada campo lo trae despues el
+esquematico, derivado deterministicamente de estos datos (ver
+pdf_creator.schema.derive_correct_values) — es lo que la automatizacion
+va a aplicar sobre properties_db.xlsx.
 """
 from __future__ import annotations
 
@@ -37,13 +40,10 @@ def _direccion() -> str:
 
 
 def _valor_legacy_erroneo(valor_tipico_min, valor_tipico_max, tipo):
-    """Genera un valor 'legacy' con ruido a proposito: a veces en 0
-    (nunca cargado), a veces con un error de tipeo grosero, a veces
-    simplemente desactualizado (dentro de rango pero distinto del real
-    que despues va a traer el esquematico)."""
-    r = random.random()
-    if r < 0.15:
-        return 0
+    """Genera un valor 'legacy' para la propiedad: plausible (dentro del
+    rango tipico, sin ceros absurdos) pero desactualizado — NUNCA el valor
+    real, que despues deriva el esquematico con un ajuste deterministico
+    por codigo (pdf_creator.schema.derive_correct_values)."""
     valor = random.uniform(valor_tipico_min, valor_tipico_max)
     return round(valor, 1) if tipo is float else int(valor)
 

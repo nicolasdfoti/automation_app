@@ -330,7 +330,7 @@ function GenerateDialog({ property, busy, onCancel, onSubmit }: GenerateDialogPr
                 step={0.1}
                 value={superficie}
                 onChange={(e) => setSuperficie(e.target.value)}
-                placeholder="al azar"
+                placeholder="automático"
                 className={FIELD_INPUT_CLASS}
               />
             </Field>
@@ -343,7 +343,7 @@ function GenerateDialog({ property, busy, onCancel, onSubmit }: GenerateDialogPr
                 step={1}
                 value={capacidad}
                 onChange={(e) => setCapacidad(e.target.value)}
-                placeholder="al azar"
+                placeholder="automático"
                 className={FIELD_INPUT_CLASS}
               />
             </Field>
@@ -356,7 +356,7 @@ function GenerateDialog({ property, busy, onCancel, onSubmit }: GenerateDialogPr
                 step={1}
                 value={plazas}
                 onChange={(e) => setPlazas(e.target.value)}
-                placeholder="al azar"
+                placeholder="automático"
                 className={FIELD_INPUT_CLASS}
               />
             </Field>
@@ -369,7 +369,7 @@ function GenerateDialog({ property, busy, onCancel, onSubmit }: GenerateDialogPr
                 step={1}
                 value={anio}
                 onChange={(e) => setAnio(e.target.value)}
-                placeholder="al azar"
+                placeholder="automático"
                 className={FIELD_INPUT_CLASS}
               />
             </Field>
@@ -382,15 +382,15 @@ function GenerateDialog({ property, busy, onCancel, onSubmit }: GenerateDialogPr
                 step={1}
                 value={salas}
                 onChange={(e) => setSalas(e.target.value)}
-                placeholder="al azar"
+                placeholder="automático"
                 className={`${FIELD_INPUT_CLASS} sm:max-w-[50%]`}
               />
             </Field>
           </div>
 
           <p className="mt-4 text-xs text-slate-500">
-            Dejá los campos en blanco (o 0) para que el valor se complete al azar, como en el
-            relevamiento original.
+            Dejá los campos en blanco (o 0) para que el valor se derive automáticamente de los
+            datos actuales de la propiedad, como en el relevamiento original.
           </p>
 
           <div className="mt-5 flex items-center justify-end gap-3">

@@ -1,12 +1,14 @@
 """
 generate_for_property(codigo): toma una propiedad que YA existe en
-target_system (via shared_store), le arma valores tecnicos "correctos"
-(el ground truth — a proposito puede ser distinto de lo que target_system
-tiene cargado hoy, que es legacy/erroneo), dibuja el PDF, y marca la
-propiedad como "con esquematico" en shared_store.
+target_system (via shared_store), le deriva valores tecnicos "correctos"
+desde los datos actuales de ESA propiedad (legacy/stale, ver
+schema.derive_correct_values), dibuja el PDF CON esos mismos valores, los
+guarda como ground_truth, y marca la propiedad como "con esquematico".
 
-Esto es lo que garantiza el enganche: un PDF nunca se genera para un
-codigo que no exista en el sistema.
+El PDF y el ground_truth usan exactamente el mismo record => valor
+documentado == valor de ground_truth siempre. Los datos de
+properties_db.xlsx NO se tocan: siguen representando el estado stale del
+sistema hasta que la automatizacion los corrija.
 """
 from __future__ import annotations
 
@@ -26,7 +28,11 @@ def generate_for_property(codigo: str, overrides: dict | None = None) -> tuple[P
         raise ValueError(f"La propiedad {codigo} no existe en target_system — no se puede generar su esquematico.")
     fila = fila.iloc[0]
 
-    valores = schema.build_numeric_values(overrides)
+    legacy = {
+        "codigo": str(codigo),
+        **{f.key: fila[f.key] for f in schema.NUMERIC_FIELDS},
+    }
+    valores = schema.derive_correct_values(legacy, overrides)
     record = {
         "codigo": str(codigo),
         "direccion": fila["direccion"],
@@ -36,7 +42,7 @@ def generate_for_property(codigo: str, overrides: dict | None = None) -> tuple[P
 
     pdf_path = db.SCHEMATICS_DIR / f"{codigo}_mock.pdf"
     pdf_builder.render(record, pdf_path)
-    db.append_ground_truth(record)
+    db.upsert_ground_truth(record)
     db.update_property(codigo, {
         "esquematico_generado": True,
         "archivo_esquematico": pdf_path.name,

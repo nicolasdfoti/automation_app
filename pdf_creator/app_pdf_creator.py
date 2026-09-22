@@ -51,7 +51,7 @@ else:
         pendientes["codigo"].astype(str).tolist(),
         format_func=lambda c: f"{c} — {pendientes[pendientes['codigo'].astype(str) == c]['direccion'].iloc[0]}",
     )
-    st.caption("Dejá vacío lo que quieras que salga al azar (simula lo que realmente mediría el relevamiento).")
+    st.caption("Dejá vacío lo que quieras que se derive automáticamente de los datos actuales de la propiedad (la derivación es determinística por código y simula el relevamiento real).")
     with st.form("form_puntual"):
         fc1, fc2 = st.columns(2)
         with fc1:
@@ -79,7 +79,7 @@ else:
 
 st.divider()
 st.subheader("Generar todas las pendientes")
-st.caption(f"Genera de una los {len(pendientes)} esquematicos que todavia faltan, con valores al azar.")
+st.caption(f"Genera de una los {len(pendientes)} esquematicos que todavia faltan, con valores correctos derivados de cada propiedad.")
 if st.button(f"\u25B6\ufe0f Generar las {len(pendientes)} pendientes", disabled=pendientes.empty, use_container_width=True):
     with st.spinner("Generando..."):
         resultados = generator.generate_for_all_pending()

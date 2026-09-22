@@ -91,6 +91,21 @@ def append_ground_truth(record: dict) -> None:
     combinado.to_excel(GROUND_TRUTH_XLSX, index=False)
 
 
+def upsert_ground_truth(record: dict) -> None:
+    """Escribe/refresca el ground truth de UNA propiedad: el PDF es la
+    fuente de verdad y este archivo debe reflejar siempre el ultimo
+    documento generado. Si ya existia una fila para el codigo (esquematico
+    regenerado), la reemplaza en vez de acumular duplicados."""
+    row = pd.DataFrame([record])
+    if GROUND_TRUTH_XLSX.exists():
+        existente = pd.read_excel(GROUND_TRUTH_XLSX)
+        existente = existente[existente["codigo"].astype(str) != str(record["codigo"])]
+        combinado = pd.concat([existente, row], ignore_index=True)
+    else:
+        combinado = row
+    combinado.to_excel(GROUND_TRUTH_XLSX, index=False)
+
+
 def read_ground_truth() -> pd.DataFrame:
     if not GROUND_TRUTH_XLSX.exists():
         return pd.DataFrame()
