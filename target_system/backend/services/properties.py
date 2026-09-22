@@ -12,7 +12,7 @@ from typing import Any
 
 import pandas as pd
 
-from backend.deps import write_lock
+from target_system.backend.deps import write_lock
 from shared_store import db
 
 # Business fields a user may edit from the UI. ``codigo`` is the identifier,

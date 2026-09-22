@@ -1,9 +1,9 @@
-"""Endpoints for the SIGE property catalog."""
+"""Endpoints for the SIGE property catalog (Target System)."""
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Query
 
-from backend.schemas import Property, PropertyList, PropertyUpdate
+from target_system.backend.schemas import Property, PropertyList, PropertyUpdate
 from target_system.backend.services import properties as properties_svc
 
 router = APIRouter(prefix="/properties", tags=["properties"])

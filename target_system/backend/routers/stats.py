@@ -1,9 +1,9 @@
-"""Read-only dashboard statistics, reusing the SIGE dashboard service."""
+"""Read-only dashboard statistics (Target System)."""
 from __future__ import annotations
 
 from fastapi import APIRouter
 
-from backend.schemas import Stats
+from target_system.backend.schemas import Stats
 from target_system.backend.services.dashboard import compute_dashboard_stats
 from shared_store import db
 

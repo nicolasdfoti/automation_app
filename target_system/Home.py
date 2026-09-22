@@ -8,7 +8,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from shared_store import db
 import ui
 
-from backend.services.dashboard import compute_dashboard_stats, recent_activity
+from target_system.backend.services.dashboard import compute_dashboard_stats, recent_activity
 
 st.set_page_config(page_title="SIGE — Sistema de Gestion Edilicia", page_icon="\U0001F4D0", layout="wide")
 ui.inject_css()

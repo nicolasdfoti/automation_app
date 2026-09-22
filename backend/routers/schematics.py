@@ -14,7 +14,7 @@ from backend.schemas import (
     SchematicGenerateRequest,
     SchematicResult,
 )
-from backend.services import properties as properties_svc
+from target_system.backend.services import properties as properties_svc
 from backend.services import schematics as schematics_svc
 
 router = APIRouter(prefix="/schematics", tags=["schematics"])

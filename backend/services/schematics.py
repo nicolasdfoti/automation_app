@@ -5,7 +5,7 @@ import math
 from pathlib import Path
 
 from backend.deps import write_lock
-from backend.services import properties as properties_svc
+from target_system.backend.services import properties as properties_svc
 from pdf_creator import generator
 from shared_store import db
 
