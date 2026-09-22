@@ -1,152 +1,236 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ChevronRight, SearchX } from "lucide-react";
 import { fetchProperties } from "../api/properties";
-import type { EstadoFiltro, Property } from "../types";
+import PageHeader from "../components/ui/PageHeader";
+import SearchInput from "../components/ui/SearchInput";
+import FilterBar, { FILTER_INPUT_CLASS } from "../components/ui/FilterBar";
+import DataTable, { type DataColumn } from "../components/ui/DataTable";
+import StatusBadge from "../components/ui/StatusBadge";
+import EmptyState from "../components/ui/EmptyState";
+import ErrorState from "../components/ui/ErrorState";
+import Button from "../components/ui/Button";
+import { TableSkeleton } from "../components/ui/Skeleton";
+import { useApi, esquematicoBadge, fuenteBadge } from "../hooks/useApi";
 import { fmtSurface } from "../lib/format";
-
-type State =
-  | { status: "loading" }
-  | { status: "error"; message: string }
-  | { status: "ready"; properties: Property[] };
+import type { EstadoFiltro, Property } from "../types";
 
 export default function PropertiesPage() {
   const navigate = useNavigate();
-  const [search, setSearch] = useState("");
+
+  const [searchInput, setSearchInput] = useState("");
+  const [debounced, setDebounced] = useState("");
   const [fuente, setFuente] = useState("");
   const [estado, setEstado] = useState<EstadoFiltro | "">("");
-  const [superficieMin, setSuperficieMin] = useState("");
-  const [superficieMax, setSuperficieMax] = useState("");
-  const [state, setState] = useState<State>({ status: "loading" });
-  const [debounced, setDebounced] = useState("");
+  const [minStr, setMinStr] = useState("");
+  const [maxStr, setMaxStr] = useState("");
 
   useEffect(() => {
-    const t = window.setTimeout(() => setDebounced(search), 300);
-    return () => window.clearTimeout(t);
-  }, [search]);
+    const timer = window.setTimeout(() => setDebounced(searchInput), 300);
+    return () => window.clearTimeout(timer);
+  }, [searchInput]);
 
-  useEffect(() => {
-    let cancelled = false;
-    setState((prev) => (prev.status === "ready" ? { status: "loading" } : prev));
-    fetchProperties({
+  const query = useMemo(
+    () => ({
       search: debounced || undefined,
       fuente: fuente || undefined,
       estado: estado || undefined,
-      superficie_min: superficieMin ? Number(superficieMin) : undefined,
-      superficie_max: superficieMax ? Number(superficieMax) : undefined,
-    })
-      .then((res) => {
-        if (!cancelled) setState({ status: "ready", properties: res.items });
-      })
-      .catch((err: Error) => {
-        if (!cancelled) setState({ status: "error", message: err.message });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [debounced, fuente, estado, superficieMin, superficieMax]);
+      superficie_min: minStr ? Number(minStr) : undefined,
+      superficie_max: maxStr ? Number(maxStr) : undefined,
+    }),
+    [debounced, fuente, estado, minStr, maxStr],
+  );
 
-  const hasFilters = Boolean(search || fuente || estado || superficieMin || superficieMax);
+  const result = useApi(
+    () => fetchProperties(query),
+    [query.search, query.fuente, query.estado, query.superficie_min, query.superficie_max],
+  );
+
+  const activeCount =
+    (searchInput ? 1 : 0) +
+    (fuente ? 1 : 0) +
+    (estado ? 1 : 0) +
+    (minStr ? 1 : 0) +
+    (maxStr ? 1 : 0);
+
+  const clearFilters = () => {
+    setSearchInput("");
+    setFuente("");
+    setEstado("");
+    setMinStr("");
+    setMaxStr("");
+  };
+
+  const columns: DataColumn<Property>[] = useMemo(
+    () => [
+      {
+        key: "codigo",
+        header: "Código",
+        className: "whitespace-nowrap font-mono font-medium text-slate-900",
+        render: (p) => p.codigo,
+      },
+      {
+        key: "direccion",
+        header: "Dirección",
+        className: "max-w-xs truncate text-slate-700",
+        render: (p) => <span className="block max-w-xs truncate">{p.direccion}</span>,
+      },
+      {
+        key: "superficie",
+        header: "Superficie (m2)",
+        align: "right",
+        className: "whitespace-nowrap tabular-nums",
+        render: (p) => fmtSurface(p.superficie_m2),
+      },
+      {
+        key: "estado",
+        header: "Estado",
+        render: (p) => {
+          const b = esquematicoBadge(p.esquematico_generado);
+          return <StatusBadge tone={b.tone}>{b.label}</StatusBadge>;
+        },
+      },
+      {
+        key: "fuente",
+        header: "Fuente",
+        render: (p) => {
+          const b = fuenteBadge(p.fuente);
+          return <StatusBadge tone={b.tone}>{b.label}</StatusBadge>;
+        },
+      },
+      {
+        key: "detalle",
+        header: "",
+        align: "right",
+        className: "w-10 text-slate-300",
+        render: () => <ChevronRight size={16} className="ml-auto" aria-hidden="true" />,
+      },
+    ],
+    [],
+  );
 
   return (
-    <section>
-      <h1 className="mb-6 text-2xl font-semibold text-slate-900">Propiedades</h1>
+    <>
+      <PageHeader
+        title="Propiedades"
+        subtitle="Portfolio completo del relevamiento técnico, con filtros y búsqueda."
+      />
 
-      <div className="mb-4 flex flex-wrap gap-3">
-        <input
-          type="search"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar por código o dirección…"
-          className="w-72 rounded-md border border-slate-300 px-3 py-2 text-sm"
-        />
-        <select
-          value={fuente}
-          onChange={(e) => setFuente(e.target.value)}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-        >
-          <option value="">Todas las fuentes</option>
-          <option value="carga manual (legacy)">Legacy</option>
-          <option value="automatizacion OCR">Automatizado</option>
-        </select>
-        <select
-          value={estado}
-          onChange={(e) => setEstado(e.target.value as EstadoFiltro | "")}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-        >
-          <option value="">Todos los estados</option>
-          <option value="generado">Con esquemático</option>
-          <option value="pendiente">Pendiente</option>
-        </select>
-        <input
-          type="number"
-          value={superficieMin}
-          onChange={(e) => setSuperficieMin(e.target.value)}
-          placeholder="Superficie mín"
-          className="w-32 rounded-md border border-slate-300 px-3 py-2 text-sm"
-        />
-        <input
-          type="number"
-          value={superficieMax}
-          onChange={(e) => setSuperficieMax(e.target.value)}
-          placeholder="Superficie máx"
-          className="w-32 rounded-md border border-slate-300 px-3 py-2 text-sm"
-        />
-        {hasFilters && (
-          <button
-            onClick={() => {
-              setSearch("");
-              setFuente("");
-              setEstado("");
-              setSuperficieMin("");
-              setSuperficieMax("");
-            }}
-            className="rounded-md px-3 py-2 text-sm text-slate-600 hover:bg-slate-100"
+      <FilterBar label="Filtros de propiedades" activeCount={activeCount} onClear={clearFilters}>
+        <div className="w-full sm:w-72">
+          <SearchInput
+            id="busqueda-propiedades"
+            label="Buscar por código o dirección"
+            value={searchInput}
+            onChange={setSearchInput}
+            placeholder="Buscar por código o dirección…"
+          />
+        </div>
+        <label className="text-xs font-medium text-slate-500">
+          Fuente
+          <select
+            value={fuente}
+            onChange={(e) => setFuente(e.target.value)}
+            className={`${FILTER_INPUT_CLASS} mt-1 w-full sm:w-44`}
+            aria-label="Fuente"
           >
-            Limpiar filtros
-          </button>
-        )}
-      </div>
+            <option value="">Todas las fuentes</option>
+            <option value="carga manual (legacy)">Legacy</option>
+            <option value="automatizacion OCR">Automatizado</option>
+          </select>
+        </label>
+        <label className="text-xs font-medium text-slate-500">
+          Estado
+          <select
+            value={estado}
+            onChange={(e) => setEstado(e.target.value as EstadoFiltro | "")}
+            className={`${FILTER_INPUT_CLASS} mt-1 w-full sm:w-40`}
+            aria-label="Estado"
+          >
+            <option value="">Todos los estados</option>
+            <option value="generado">Con esquemático</option>
+            <option value="pendiente">Pendiente</option>
+          </select>
+        </label>
+        <label className="text-xs font-medium text-slate-500">
+          Superficie mín (m2)
+          <input
+            type="number"
+            min={0}
+            value={minStr}
+            onChange={(e) => setMinStr(e.target.value)}
+            placeholder="mín"
+            className={`${FILTER_INPUT_CLASS} mt-1 w-28`}
+            aria-label="Superficie mínima en metros cuadrados"
+          />
+        </label>
+        <label className="text-xs font-medium text-slate-500">
+          Superficie máx (m2)
+          <input
+            type="number"
+            min={0}
+            value={maxStr}
+            onChange={(e) => setMaxStr(e.target.value)}
+            placeholder="máx"
+            className={`${FILTER_INPUT_CLASS} mt-1 w-28`}
+            aria-label="Superficie máxima en metros cuadrados"
+          />
+        </label>
+      </FilterBar>
 
-      {state.status === "loading" && <p>Cargando propiedades…</p>}
-      {state.status === "error" && <p>No pudimos cargar las propiedades: {state.message}</p>}
-      {state.status === "ready" &&
-        (state.properties.length === 0 ? (
-          <p className="text-sm text-slate-500">No encontramos propiedades con el filtro actual.</p>
-        ) : (
-          <>
-            <p className="mb-2 text-sm text-slate-500">
-              {state.properties.length} {state.properties.length === 1 ? "propiedad" : "propiedades"}
-            </p>
-            <table className="w-full border-collapse text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
-                  <th className="py-2 pr-4">Código</th>
-                  <th className="py-2 pr-4">Dirección</th>
-                  <th className="py-2 pr-4 text-right">Superficie</th>
-                  <th className="py-2 pr-4">Estado</th>
-                  <th className="py-2 pr-4">Fuente</th>
-                </tr>
-              </thead>
-              <tbody>
-                {state.properties.map((p) => (
-                  <tr
-                    key={p.codigo}
-                    onClick={() => navigate(`/propiedades/${p.codigo}`)}
-                    className="cursor-pointer border-b border-slate-100 hover:bg-slate-50"
-                  >
-                    <td className="py-2 pr-4 font-mono text-slate-800">{p.codigo}</td>
-                    <td className="py-2 pr-4 text-slate-700">{p.direccion}</td>
-                    <td className="py-2 pr-4 text-right text-slate-700">{fmtSurface(p.superficie_m2)}</td>
-                    <td className="py-2 pr-4 text-slate-700">
-                      {p.esquematico_generado ? "Con esquemático" : "Pendiente"}
-                    </td>
-                    <td className="py-2 pr-4 text-slate-700">{p.fuente}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </>
-        ))}
-    </section>
+      {result.status === "loading" && <div className="mt-4"><TableSkeleton rows={10} /></div>}
+
+      {result.status === "error" && (
+        <div className="mt-4">
+          <ErrorState
+            title="No pudimos cargar las propiedades"
+            description="Ocurrió un problema al comunicarnos con el servidor."
+            detail={result.message}
+            onRetry={result.retry}
+          />
+        </div>
+      )}
+
+      {result.status === "ready" && result.data && (
+        <div className="mt-4">
+          <p className="mb-2 text-sm tabular-nums text-slate-500" aria-live="polite">
+            {result.data.items.length} {result.data.items.length === 1 ? "propiedad" : "propiedades"}
+          </p>
+          {result.data.items.length === 0 ? (
+            activeCount > 0 ? (
+              <EmptyState
+                icon={SearchX}
+                title="No encontramos propiedades"
+                description="Probá cambiar los filtros o realizar otra búsqueda."
+                action={
+                  <Button variant="secondary" onClick={clearFilters}>
+                    Limpiar filtros
+                  </Button>
+                }
+              />
+            ) : (
+              <EmptyState
+                icon={SearchX}
+                title="No hay propiedades cargadas"
+                description="El portfolio todavía no tiene propiedades procesadas."
+                action={
+                  <Button variant="secondary" onClick={() => navigate("/")}>
+                    Ir al dashboard
+                  </Button>
+                }
+              />
+            )
+          ) : (
+            <DataTable
+              columns={columns}
+              rows={result.data.items}
+              rowKey={(p) => p.codigo}
+              ariaLabel="Listado de propiedades. Fila seleccionable para ver el detalle."
+              onRowClick={(p) => navigate(`/propiedades/${p.codigo}`)}
+            />
+          )}
+        </div>
+      )}
+    </>
   );
 }

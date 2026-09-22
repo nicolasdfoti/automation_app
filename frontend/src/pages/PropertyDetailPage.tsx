@@ -1,104 +1,152 @@
-import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { ArrowLeft, FileText, MapPin } from "lucide-react";
 import { fetchProperty } from "../api/properties";
-import type { Property } from "../types";
+import StatusBadge from "../components/ui/StatusBadge";
+import SectionCard from "../components/ui/SectionCard";
+import ErrorState from "../components/ui/ErrorState";
+import { DetailSkeleton } from "../components/ui/Skeleton";
+import { useApi, esquematicoBadge, fuenteBadge } from "../hooks/useApi";
 import { fmtInt, fmtSurface } from "../lib/format";
 
-type State =
-  | { status: "loading" }
-  | { status: "error"; message: string }
-  | { status: "ready"; property: Property };
+const FIELDS: { label: string; render: (p: import("../types").Property) => string; mono?: boolean }[] = [
+  { label: "Código", render: (p) => p.codigo, mono: true },
+  { label: "Dirección", render: (p) => p.direccion },
+  { label: "Superficie", render: (p) => `${fmtSurface(p.superficie_m2)} m2` },
+  { label: "Capacidad", render: (p) => `${fmtInt(p.capacidad_personas)} pers.` },
+  { label: "Estacionamiento", render: (p) => `${fmtInt(p.plazas_estacionamiento)} plazas` },
+  { label: "Año de construcción", render: (p) => fmtInt(p.anio_construccion) },
+  { label: "Salas / ambientes", render: (p) => fmtInt(p.salas) },
+  { label: "Fuente", render: (p) => p.fuente },
+  { label: "Última actualización", render: (p) => p.ultima_actualizacion },
+];
 
 export default function PropertyDetailPage() {
   const { codigo } = useParams<{ codigo: string }>();
-  const [state, setState] = useState<State>({ status: "loading" });
+  const result = useApi(() => fetchProperty(codigo ?? ""), [codigo]);
+  const property = result.status === "ready" ? result.data : undefined;
 
-  useEffect(() => {
-    if (!codigo) return;
-    let cancelled = false;
-    setState({ status: "loading" });
-    fetchProperty(codigo)
-      .then((property) => {
-        if (!cancelled) setState({ status: "ready", property });
-      })
-      .catch((err: Error) => {
-        if (!cancelled) setState({ status: "error", message: err.message });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [codigo]);
+  const is404 = result.statusCode === 404;
 
   return (
-    <section>
-      <Link to="/propiedades" className="mb-4 inline-flex items-center text-sm text-slate-600 hover:text-slate-900">
-        ← Volver a propiedades
+    <>
+      <Link
+        to="/propiedades"
+        className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 transition-colors duration-150 hover:text-slate-900"
+      >
+        <ArrowLeft size={16} aria-hidden="true" />
+        Volver a propiedades
       </Link>
 
-      {state.status === "loading" && <p>Cargando propiedad…</p>}
-      {state.status === "error" && <p>No pudimos cargar la propiedad: {state.message}</p>}
+      {result.status === "loading" && <DetailSkeleton />}
 
-      {state.status === "ready" && (
-        <>
-          <h1 className="text-2xl font-semibold text-slate-900">Propiedad {state.property.codigo}</h1>
-          <p className="text-sm text-slate-600">{state.property.direccion}</p>
-
-          <p className="mt-2 text-sm">
-            {state.property.esquematico_generado ? (
-              <span className="font-medium text-emerald-700">Esquemático generado</span>
+      {result.status === "error" && (
+        <ErrorState
+          title={is404 ? "Propiedad no encontrada" : "No pudimos cargar la propiedad"}
+          description={
+            is404
+              ? "El código solicitado no existe en el portfolio."
+              : "Ocurrió un problema al comunicarnos con el servidor."
+          }
+          detail={is404 ? `${codigo} no figura en el portfolio.` : result.message}
+          action={
+            is404 ? (
+              <Link
+                to="/propiedades"
+                className="inline-flex h-9 items-center rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 transition-colors duration-150 hover:bg-slate-50"
+              >
+                Volver a propiedades
+              </Link>
             ) : (
-              <span className="font-medium text-amber-700">Pendiente de esquemático</span>
-            )}
-          </p>
+              <button
+                type="button"
+                onClick={result.retry}
+                className="inline-flex h-9 items-center rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 transition-colors duration-150 hover:bg-slate-50"
+              >
+                Reintentar
+              </button>
+            )
+          }
+        />
+      )}
 
-          <h2 className="mb-2 mt-8 text-lg font-semibold text-slate-900">Información general</h2>
-          <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            <div>
-              <dt className="text-xs uppercase tracking-wide text-slate-500">Código</dt>
-              <dd className="font-mono text-slate-800">{state.property.codigo}</dd>
+      {property && (
+        <>
+          <header className="mb-6">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+                Propiedad {property.codigo}
+              </h1>
+              <span className="inline-flex items-center gap-1.5 text-sm text-slate-500">
+                <MapPin size={15} aria-hidden="true" />
+                {property.direccion}
+              </span>
             </div>
-            <div>
-              <dt className="text-xs uppercase tracking-wide text-slate-500">Dirección</dt>
-              <dd className="text-slate-800">{state.property.direccion}</dd>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              {(() => {
+                const e = esquematicoBadge(property.esquematico_generado);
+                const f = fuenteBadge(property.fuente);
+                return (
+                  <>
+                    <StatusBadge tone={e.tone}>{e.label}</StatusBadge>
+                    <StatusBadge tone={f.tone}>{f.label}</StatusBadge>
+                  </>
+                );
+              })()}
             </div>
-            <div>
-              <dt className="text-xs uppercase tracking-wide text-slate-500">Superficie</dt>
-              <dd className="text-slate-800">{fmtSurface(state.property.superficie_m2)} m2</dd>
-            </div>
-            <div>
-              <dt className="text-xs uppercase tracking-wide text-slate-500">Capacidad</dt>
-              <dd className="text-slate-800">{fmtInt(state.property.capacidad_personas)} pers.</dd>
-            </div>
-            <div>
-              <dt className="text-xs uppercase tracking-wide text-slate-500">Estacionamiento</dt>
-              <dd className="text-slate-800">{fmtInt(state.property.plazas_estacionamiento)} plazas</dd>
-            </div>
-            <div>
-              <dt className="text-xs uppercase tracking-wide text-slate-500">Año de construcción</dt>
-              <dd className="text-slate-800">{fmtInt(state.property.anio_construccion)}</dd>
-            </div>
-            <div>
-              <dt className="text-xs uppercase tracking-wide text-slate-500">Salas</dt>
-              <dd className="text-slate-800">{fmtInt(state.property.salas)}</dd>
-            </div>
-            <div>
-              <dt className="text-xs uppercase tracking-wide text-slate-500">Fuente</dt>
-              <dd className="text-slate-800">{state.property.fuente}</dd>
-            </div>
-            <div>
-              <dt className="text-xs uppercase tracking-wide text-slate-500">Última actualización</dt>
-              <dd className="text-slate-800">{state.property.ultima_actualizacion}</dd>
-            </div>
-          </dl>
+          </header>
 
-          <h2 className="mb-2 mt-8 text-lg font-semibold text-slate-900">Esquemático</h2>
-          <p className="text-sm text-slate-600">
-            {state.property.archivo_esquematico
-              ? `Archivo: ${state.property.archivo_esquematico}`
-              : "Esta propiedad todavía no tiene esquemático generado."}
-          </p>
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+            <SectionCard
+              className="xl:col-span-2"
+              title="Información general"
+              description="Datos técnicos cargados en el portfolio."
+            >
+              <dl className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+                {FIELDS.map((field) => (
+                  <div key={field.label}>
+                    <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">{field.label}</dt>
+                    <dd
+                      className={`mt-1 text-sm ${field.mono ? "font-mono" : ""} font-medium text-slate-900`}
+                    >
+                      {field.render(property)}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </SectionCard>
+
+            <SectionCard title="Esquemático" description="Estado del plano técnico generado.">
+              <div className="flex items-start gap-3">
+                <div
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500"
+                  aria-hidden="true"
+                >
+                  <FileText size={18} />
+                </div>
+                <div className="min-w-0">
+                  {property.archivo_esquematico ? (
+                    <>
+                      <p className="text-sm font-medium text-slate-900">
+                        {property.archivo_esquematico}
+                      </p>
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        Generado para la propiedad {property.codigo}.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm font-medium text-slate-900">Sin esquemático generado</p>
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        Esta propiedad todavía no tiene plano técnico.
+                      </p>
+                    </>
+                  )}
+                </div>
+              </div>
+            </SectionCard>
+          </div>
         </>
       )}
-    </section>
+    </>
   );
 }

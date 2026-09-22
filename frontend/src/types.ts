@@ -28,3 +28,5 @@ export interface Stats {
 export const FUENTES = ["carga manual (legacy)", "automatizacion OCR"] as const;
 
 export type EstadoFiltro = "generado" | "pendiente";
+
+export type BadgeTone = "success" | "warning" | "error" | "neutral" | "info";
