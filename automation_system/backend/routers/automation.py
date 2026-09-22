@@ -38,12 +38,13 @@ def apply() -> AutomationApplyResult:
 
 @router.post("/playwright", response_model=PlaywrightAutomationResult)
 def playwright(payload: PlaywrightAutomationRequest) -> PlaywrightAutomationResult:
-    """Automatizar UNA correccion mediante la UI de target (browser).
+    """Automatizar correcciones mediante la UI de target (browser headed).
 
-    Recomputa el cambio esperado desde los archivos autoridad
-    (properties_db.xlsx + ocr_output.xlsx) y lo aplica via Playwright sobre la
-    UI de target (:5173). No confia en valores enviados por el browser y nunca
-    escribe Excel como fallback.
+    Recomputa los cambios esperados desde los archivos autoridad
+    (properties_db.xlsx + ocr_output.xlsx) y los aplica via Playwright sobre la
+    UI de target (:5173) en una ventana visible. Cuando ``payload.field`` es
+    None se corrigen todos los campos pendientes de la propiedad. No confia en
+    valores enviados por el browser y nunca escribe Excel como fallback.
     """
     try:
         result = playwright_svc.apply_correction(payload.codigo, payload.field)

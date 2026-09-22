@@ -136,13 +136,25 @@ export interface AutomationPreview {
   items: AutomationItem[];
 }
 
-export interface AutomationUpdatedItem {
-  codigo: string;
-  updated_fields: string[];
+export interface PlaywrightChangeResult {
+  field: string;
+  label: string;
+  before: number | null;
+  expected: number | null;
+  after: number | null;
+  verified: boolean;
 }
 
-export interface AutomationApplyResult {
-  updated_properties: number;
-  updated_fields: number;
-  items: AutomationUpdatedItem[];
+export interface PlaywrightAutomationResult {
+  success: boolean;
+  codigo: string;
+  field: string | null;
+  before: number | null;
+  expected: number | null;
+  after: number | null;
+  verified: boolean;
+  changes: PlaywrightChangeResult[];
+  stage: string | null;
+  error: string | null;
+  steps: string[];
 }

@@ -9,9 +9,12 @@ workbooks are snapshotted first and restored unconditionally in ``finally``.
 
 Covers every path that does NOT require a real browser or the running Target
 System stack: endpoint existence, invalid field (422), missing property (404)
-and the no-change case (stage='no_change', no browser). The live E2E (driving
-http://127.0.0.1:5173) requires Target UI + Target backend + Automation
-backend up and is exercised manually / documented in the README.
+and the no-change case (stage='no_change', no browser). The demo property is
+picked dynamically from the shared data (any property present in both
+properties_db and ocr_output) so the test never depends on a specific seeded
+code. The live E2E (driving http://127.0.0.1:5173) requires Target UI + Target
+backend + Automation backend up and is exercised manually / documented in the
+README.
 """
 from __future__ import annotations
 
@@ -25,15 +28,28 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent))
 from fastapi.testclient import TestClient  # noqa: E402
 
 from automation_system.backend.main import app  # noqa: E402
-from automation_system.backend.services import automation as automation_svc  # noqa: E402
 from automation_system.backend.services import playwright_automation as pw_svc  # noqa: E402
 from shared_store import db  # noqa: E402
 
-TARGET_CODIGO = "550482"
 FIELD = "superficie_m2"
 SNAPSHOT_DIR = Path(os.environ["TEMP"]) / f"playwright_validation_{os.getpid()}"
 
 client = TestClient(app)
+
+
+def pick_target_codigo() -> str:
+    """A property that exists in both the property store and the OCR output."""
+    propiedades = db.read_properties()
+    ocr = db.read_ocr_output()
+    assert not ocr.empty and "codigo" in ocr.columns
+    ocr_codes: set[str] = set(ocr["codigo"].astype(str))
+    codes = [c for c in propiedades["codigo"].astype(str) if c in ocr_codes]
+    assert codes, "no hay una propiedad compartida entre properties_db y ocr_output"
+    assert FIELD in ocr.columns, f"campo {FIELD} no presente en ocr_output"
+    return codes[0]
+
+
+TARGET_CODIGO = pick_target_codigo()
 
 
 def snapshot() -> None:

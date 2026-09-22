@@ -11,7 +11,7 @@ compartido de utilidades:
 | **`shared_store/`** | — | — | Datos compartidos: `properties_db.xlsx`, `ground_truth.xlsx`, `ocr_output.xlsx`, `schematics/*.pdf`. Cada sistema lee/escribe estos archivos; ninguno importa codigo interno del otro. |
 | **`common/`** | — | — | Utilidades neutrales (modelos, validacion, excel, lock de escritura). |
 | **`pdf_creator/`** | — | — | Genera el PDF del esquematico (ground truth). Runtime neutral consumido por Automation. |
-| **`pipeline_app/`**, `mock_external_system/`, `backend/` (parcial) | — | — | Runtimes legacy / POC protegido sin commit (ver §3 y §7). |
+| **`pipeline_app/`**, `backend/` (parcial) | — | — | Runtime legacy / POC protegido sin commit (ver §3 y §7). |
 
 Regla arquitectonica central: **Automation NO importa `target_system.backend.*`**
 (no clases, funciones ni excepciones del backend de target). Todo acceso a una
@@ -41,16 +41,27 @@ Variables de entorno (Automation):
 
 - `TARGET_API_BASE_URL` — base de la API de target (default `http://127.0.0.1:8000`).
 - `TARGET_UI_URL` — base de la UI de target para Playwright (default `http://127.0.0.1:5173`).
-- `PLAYWRIGHT_HEADLESS` — `1` para headless, `0` (default) para browser visible.
+- `PLAYWRIGHT_HEADLESS` — `1` para headless (CI/test), `0` (default) para browser visible.
+- `PLAYWRIGHT_STEP_DELAY_MS` — pausa visible entre pasos en modo headed (default `750`; `0` desactiva).
 
-Playwright (Automatizar > unica correccion, propiedad `550482` campo `superficie_m2`):
-requiere la UI de target arriba (`5173`) y su backend (`8000`), ademas del
-backend de automation (`8001`):
+Playwright (visible, headed): se abre el navegador real de Target
+(`http://127.0.0.1:5173/propiedades/{codigo}`), se edita y guarda la propiedad
+por su UI y se verifica recargando el detalle. Desde la UI de Automation
+(:5174, pagina Automatizar), el boton "Automatizar" de cada fila o
+"Automatizar todas" dispara este flujo (nunca una escritura directa de Excel).
+Requerimientos de runtime: UI de target arriba (`5173`) + backend de target
+(`8000`) + backend de automation (`8001`). Ejemplo directo por API:
 
 ```bash
+# sin "field": corrige todos los campos pendientes de la propiedad (una sesion)
 curl -X POST http://127.0.0.1:8001/api/automation/playwright \
   -H 'Content-Type: application/json' \
-  -d '{"codigo":"550482","field":"superficie_m2"}'
+  -d '{"codigo":"877597"}'
+
+# un solo campo (compatibilidad con el flujo POC)
+curl -X POST http://127.0.0.1:8001/api/automation/playwright \
+  -H 'Content-Type: application/json' \
+  -d '{"codigo":"877597","field":"superficie_m2"}'
 ```
 
 ## Tests
@@ -226,8 +237,7 @@ la UI de target (:5173) manteniendo propiedad `550482` / campo `superficie_m2`;
   `pipeline_app/pages/{2_Comparar,3_Automatizar}.py`.
 - **Commit:** un unico commit entrega la separacion; `git status` post-commit
   muestra SOLO los archivos sucios protegidos (`backend/`, `frontend/` residue,
-  `requirements.txt`, `mock_external_system/`), todos fuera del commit e
-  intactos en disco.
+  `requirements.txt`), todos fuera del commit e intactos en disco.
 - **Verificacion manual (no automatizable sin runtime):** E2E Playwright por
   browser contra la UI real de target (:5173 + :8000 + :8001), documento en
   §Puertos y arranque.

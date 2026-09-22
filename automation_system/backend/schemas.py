@@ -174,32 +174,48 @@ class AutomationApplyResult(BaseModel):
 
 
 class PlaywrightAutomationRequest(BaseModel):
-    """Request to automate ONE correction through the Target System UI.
+    """Request to automate corrections through the Target System UI.
 
-    Only the property code and the field to correct are accepted; the value
-    the browser writes is recomputed server-side from the stored files.
+    Only the property code (and optionally the field) is accepted; the value
+    the browser writes is recomputed server-side from the stored files. When
+    ``field`` is omitted, every pending field of the property is corrected in
+    one browser session.
     """
 
     codigo: str
+    field: str | None = None
+
+
+class PlaywrightChangeResult(BaseModel):
+    """Result for one field corrected through the Target System UI."""
+
     field: str
-
-
-class PlaywrightAutomationResult(BaseModel):
-    """Detailed outcome of a single browser automation run.
-
-    ``before_ui`` is the value the Target UI displayed before the update,
-    while ``expected``/``after`` are the recomputed value and the value read
-    back after saving. ``steps`` records what Playwright did, and ``stage``
-    names the failing step when ``success`` is False (never a silent fallback).
-    """
-
-    success: bool
-    codigo: str
-    field: str
+    label: str
     before: float | int | None = None
     expected: float | int | None = None
     after: float | int | None = None
     verified: bool = False
+
+
+class PlaywrightAutomationResult(BaseModel):
+    """Detailed outcome of a browser automation run.
+
+    ``before``/``expected``/``after``/``verified`` describe the (usually single)
+    field when only one was corrected; ``changes`` always carries the per-field
+    detail. The verification reads the value back from the Target UI after a
+    page reload, so ``after`` reflects the persisted data. ``steps`` records
+    what Playwright did and ``stage`` names the failing step when ``success`` is
+    False (never a silent fallback).
+    """
+
+    success: bool
+    codigo: str
+    field: str | None = None
+    before: float | int | None = None
+    expected: float | int | None = None
+    after: float | int | None = None
+    verified: bool = False
+    changes: list[PlaywrightChangeResult] = []
     stage: str | None = None
     error: str | None = None
     steps: list[str] = []

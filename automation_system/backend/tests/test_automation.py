@@ -127,8 +127,12 @@ def run_checks() -> None:
     print(f"[ok] preview: {p['properties_with_changes']} propiedades, {p['total_changes']} campos")
 
     # --- datos invalidos (solo lectura, sobre el estado stale) ----------------
-    codigo = "550482"
-    ocr_bad = ocr0.drop_duplicates("codigo", keep="last").copy()
+    ocr_norm_all = ocr0.drop_duplicates("codigo", keep="last")
+    prop_codes = set(props0["codigo"].astype(str))
+    shared_codes = [str(c) for c in ocr_norm_all["codigo"] if str(c) in prop_codes]
+    assert shared_codes, "no hay propiedad compartida entre properties_db y ocr_output"
+    codigo = shared_codes[0]
+    ocr_bad = ocr_norm_all.copy()
     ocr_bad["superficie_m2"] = ocr_bad["superficie_m2"].astype(object)
     ocr_bad.loc[ocr_bad["codigo"].astype(str) == codigo, "superficie_m2"] = "no-valido"
     ocr_bad.loc[ocr_bad["codigo"].astype(str) == codigo, "anio_construccion"] = 3000  # fuera de rango

@@ -9,7 +9,7 @@ import {
   Workflow,
 } from "lucide-react";
 import { ApiError } from "../api/client";
-import { applyAutomation, fetchAutomationPreview } from "../api/automation";
+import { automateWithPlaywright, fetchAutomationPreview } from "../api/automation";
 import { fetchOcrStatus } from "../api/ocr";
 import PageHeader from "../components/ui/PageHeader";
 import SectionCard from "../components/ui/SectionCard";
@@ -20,10 +20,11 @@ import EmptyState from "../components/ui/EmptyState";
 import ErrorState from "../components/ui/ErrorState";
 import DataTable, { type DataColumn } from "../components/ui/DataTable";
 import { KPISkeleton, TableSkeleton } from "../components/ui/Skeleton";
+import StatusBadge from "../components/ui/StatusBadge";
 import { useApi } from "../hooks/useApi";
 import { fmtInt, fmtSurface } from "../lib/format";
 import { propertyUrlInTarget } from "../lib/target";
-import type { AutomationItem, OcrStatus } from "../types";
+import type { AutomationItem, OcrStatus, PlaywrightAutomationResult } from "../types";
 
 const CAMPO_META: Record<string, { label: string; unit: string }> = {
   superficie_m2: { label: "Superficie", unit: " m²" },
@@ -47,6 +48,44 @@ function errorText(err: unknown): string {
 interface Feedback {
   kind: "success" | "error";
   text: string;
+}
+
+interface ResultRow {
+  key: string;
+  codigo: string;
+  fieldName: string;
+  before: number | null;
+  expected: number | null;
+  after: number | null;
+  verified: boolean;
+}
+
+function flattenChanges(result: PlaywrightAutomationResult): ResultRow[] {
+  if (result.changes.length > 0) {
+    return result.changes.map((c) => ({
+      key: `${result.codigo}-${c.field}`,
+      codigo: result.codigo,
+      fieldName: c.field,
+      before: c.before,
+      expected: c.expected,
+      after: c.after,
+      verified: c.verified,
+    }));
+  }
+  if (result.field != null) {
+    return [
+      {
+        key: `${result.codigo}-${result.field}`,
+        codigo: result.codigo,
+        fieldName: result.field,
+        before: result.before,
+        expected: result.expected,
+        after: result.after,
+        verified: result.verified,
+      },
+    ];
+  }
+  return [];
 }
 
 function ChangeList({ item }: { item: AutomationItem }) {
@@ -77,33 +116,89 @@ export default function AutomationPage() {
   const ocr = useApi<OcrStatus>(fetchOcrStatus, []);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [applying, setApplying] = useState(false);
+  const [running, setRunning] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [resultRows, setResultRows] = useState<ResultRow[]>([]);
 
   const data = preview.data;
   const changes = data?.total_changes ?? 0;
   const withChanges = data?.properties_with_changes ?? 0;
   const noChanges = Math.max(0, (data?.total_properties ?? 0) - withChanges);
 
-  const doApply = async () => {
-    if (applying) return;
-    setConfirmOpen(false);
-    setApplying(true);
-    setFeedback(null);
-    try {
-      const result = await applyAutomation();
-      const nounProps = result.updated_properties === 1 ? "propiedad" : "propiedades";
-      const nounFields = result.updated_fields === 1 ? "campo" : "campos";
-      setFeedback({
-        kind: "success",
-        text: `Correcciones aplicadas correctamente — ${result.updated_properties} ${nounProps} actualizadas, ${result.updated_fields} ${nounFields} actualizados.`,
-      });
-      preview.retry();
-    } catch (err) {
-      setFeedback({ kind: "error", text: `No se pudieron aplicar las correcciones. ${errorText(err)}` });
-    } finally {
-      setApplying(false);
+  const setResultFeedback = (rows: ResultRow[]) => {
+    const properties = new Set(rows.map((r) => r.codigo)).size;
+    const verified = rows.filter((r) => r.verified).length;
+    const failed = rows.length - verified;
+    if (rows.length === 0) {
+      setFeedback({ kind: "error", text: "No se corrigió ningún campo (sin cambios pendientes)." });
+      return;
     }
+    setFeedback({
+      kind: failed === 0 ? "success" : "error",
+      text:
+        failed === 0
+          ? `Automatización por browser completada — ${verified} campos verificados en ${properties} propiedad${properties === 1 ? "" : "es"}, aplicados sobre la UI real de Target.`
+          : `Automatización por browser con ${failed} campo${failed === 1 ? "" : "s"} que no se pudieron verificar.`,
+    });
+  };
+
+  const runSingle = async (item: AutomationItem) => {
+    if (running) return;
+    setRunning(true);
+    setFeedback(null);
+    setResultRows([]);
+    try {
+      const result = await automateWithPlaywright(item.codigo);
+      const rows = flattenChanges(result);
+      setResultRows(rows);
+      setResultFeedback(rows);
+    } catch (err) {
+      setFeedback({
+        kind: "error",
+        text: `No se pudo automatizar ${item.codigo}. ${errorText(err)}`,
+      });
+    } finally {
+      setRunning(false);
+      preview.retry();
+    }
+  };
+
+  const runBulk = async () => {
+    if (running) return;
+    setConfirmOpen(false);
+    setRunning(true);
+    setFeedback(null);
+    setResultRows([]);
+    const rows: ResultRow[] = [];
+    let errored = 0;
+    for (const item of data?.items ?? []) {
+      try {
+        const result = await automateWithPlaywright(item.codigo);
+        if (!result.success) errored += 1;
+        rows.push(...flattenChanges(result));
+      } catch {
+        errored += 1;
+      }
+    }
+    setResultRows(rows);
+    if (rows.length === 0) {
+      setFeedback({
+        kind: errored === 0 ? "error" : "error",
+        text: errored === 0
+          ? "No se corrigió ningún campo (sin cambios pendientes)."
+          : `No se pudo completar ninguna automatización (${errored} ejecuciones fallidas).`,
+      });
+    } else {
+      const properties = new Set(rows.map((r) => r.codigo)).size;
+      const verified = rows.filter((r) => r.verified).length;
+      setFeedback({
+        kind: errored === 0 && verified === rows.length ? "success" : "error",
+        text: `Automatización por browser — ${verified}/${rows.length} campos verificados en ${properties} propiedad${properties === 1 ? "" : "es"}` +
+          (errored > 0 ? `, ${errored} ejecución(es) con error.` : " sobre la UI real de Target."),
+      });
+    }
+    setRunning(false);
+    preview.retry();
   };
 
   const ocrNotRun = ocr.status === "ready" && (ocr.data?.procesados ?? 0) === 0;
@@ -129,18 +224,71 @@ export default function AutomationPage() {
       key: "accion",
       header: "Acción",
       align: "right",
-      className: "w-36",
+      className: "w-48",
       render: (item) => (
-        <a
-          href={propertyUrlInTarget(item.codigo)}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-xs font-medium text-slate-700 transition-colors duration-150 hover:bg-slate-50 hover:text-slate-900"
-        >
-          Ver propiedad
-          <ArrowRight size={13} aria-hidden="true" />
-        </a>
+        <div className="flex items-center justify-end gap-2">
+          <a
+            href={propertyUrlInTarget(item.codigo)}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-xs font-medium text-slate-700 transition-colors duration-150 hover:bg-slate-50 hover:text-slate-900"
+          >
+            Ver
+            <ArrowRight size={13} aria-hidden="true" />
+          </a>
+          <Button
+            size="sm"
+            variant="secondary"
+            icon={<Sparkles size={13} aria-hidden="true" />}
+            disabled={running}
+            onClick={() => void runSingle(item)}
+          >
+            Automatizar
+          </Button>
+        </div>
       ),
+    },
+  ];
+
+  const resultColumns: DataColumn<ResultRow>[] = [
+    {
+      key: "codigo",
+      header: "Código",
+      className: "whitespace-nowrap font-mono font-medium text-slate-900",
+      render: (r) => r.codigo,
+    },
+    {
+      key: "campo",
+      header: "Campo",
+      render: (r) => <span className="text-slate-600">{CAMPO_META[r.fieldName]?.label ?? r.fieldName}</span>,
+    },
+    {
+      key: "before",
+      header: "Antes",
+      render: (r) => <span className="font-mono tabular-nums text-slate-500">{formatChange(r.fieldName, r.before)}</span>,
+    },
+    {
+      key: "expected",
+      header: "Esperado",
+      render: (r) => <span className="font-mono tabular-nums text-slate-500">{formatChange(r.fieldName, r.expected)}</span>,
+    },
+    {
+      key: "after",
+      header: "Después",
+      render: (r) => (
+        <span className="font-mono tabular-nums font-semibold text-slate-900">{formatChange(r.fieldName, r.after)}</span>
+      ),
+    },
+    {
+      key: "estado",
+      header: "Estado",
+      align: "right",
+      render: (r) =>
+        r.verified ? (
+          <StatusBadge tone="success">Verificado</StatusBadge>
+        ) : (
+          <StatusBadge tone="error">Diferente</StatusBadge>
+        ),
     },
   ];
 
@@ -148,15 +296,15 @@ export default function AutomationPage() {
     <>
       <PageHeader
         title="Automatizar"
-        subtitle="Revisá las diferencias detectadas por el OCR contra los datos actuales y aplicalas al sistema de propiedades."
+        subtitle="Revisá las diferencias detectadas por el OCR contra los datos actuales. La corrección se aplica por el navegador real de Target (visible), editando y guardando la propiedad en su UI."
         actions={
           <Button
             icon={<Sparkles size={16} aria-hidden="true" />}
-            disabled={withChanges === 0 || applying || preview.status === "loading"}
-            loading={applying}
+            disabled={withChanges === 0 || running || preview.status === "loading"}
+            loading={running}
             onClick={() => setConfirmOpen(true)}
           >
-            {applying ? "Aplicando…" : "Aplicar correcciones"}
+            {running ? "Automatizando…" : "Automatizar todas"}
           </Button>
         }
       />
@@ -172,6 +320,22 @@ export default function AutomationPage() {
         >
           {feedback.kind === "success" ? <CheckCircle2 size={16} className="mt-0.5 shrink-0" aria-hidden="true" /> : null}
           <span>{feedback.text}</span>
+        </div>
+      )}
+
+      {resultRows.length > 0 && (
+        <div className="mb-6">
+          <SectionCard
+            title="Resultado de la automatización (browser real)"
+            description="Cambios aplicados sobre la UI de Target (:5173) y verificados tras recargar el detalle."
+          >
+            <DataTable
+              columns={resultColumns}
+              rows={resultRows}
+              rowKey={(r) => r.key}
+              ariaLabel="Resultado de la automatización por browser"
+            />
+          </SectionCard>
         </div>
       )}
 
@@ -192,8 +356,8 @@ export default function AutomationPage() {
       )}
 
       {preview.status === "ready" && data && (
-        <>
-          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <StatCard icon={ClipboardCheck} label="Propiedades con cambios" value={String(withChanges)} tone="warning" />
             <StatCard icon={Workflow} label="Campos a actualizar" value={String(changes)} hint="según el OCR" tone="primary" />
             <StatCard icon={CheckCircle2} label="Sin cambios" value={String(noChanges)} hint="ya al día" tone="success" />
@@ -201,7 +365,7 @@ export default function AutomationPage() {
 
           <SectionCard
             title="Previsualización de correcciones"
-            description="Los valores del OCR serán aplicados sobre los datos actuales (stale)."
+            description="Cada corrección se aplicará por el navegador real de Target, no por Excel."
           >
             {withChanges === 0 ? (
               ocrNotRun ? (
@@ -234,29 +398,30 @@ export default function AutomationPage() {
               />
             )}
           </SectionCard>
-        </>
+        </div>
       )}
 
       <Dialog
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
-        title="Aplicar correcciones"
-        description="Esta acción modificará properties_db.xlsx."
+        title="Automatizar todas las correcciones"
+        description="Se abre el navegador real de Target (http://127.0.0.1:5173) una vez por propiedad con correcciones pendientes."
       >
         <p className="text-sm text-slate-600">
-          Se actualizarán <strong className="text-slate-900">{withChanges} propiedades</strong> y{" "}
-          <strong className="text-slate-900">{changes} campos</strong> en el sistema.
+          Se corregirán <strong className="text-slate-900">{withChanges} propiedades</strong> y{" "}
+          <strong className="text-slate-900">{changes} campos</strong> editando y guardando cada propiedad en la UI de
+          Target. Podés ver la ventana del navegador mientras el proceso avanza.
         </p>
         <p className="mt-2 text-sm text-slate-500">
-          Los valores del OCR reemplazarán los datos actuales de cada campo detectado. El ground truth y la salida del
-          OCR no se modifican.
+          Los valores los recomputa el backend desde los archivos autoridad: no se confía en el browser y nunca se
+          escribe Excel directamente.
         </p>
         <div className="mt-5 flex items-center justify-end gap-3">
-          <Button variant="ghost" onClick={() => setConfirmOpen(false)} disabled={applying}>
+          <Button variant="ghost" onClick={() => setConfirmOpen(false)} disabled={running}>
             Cancelar
           </Button>
-          <Button onClick={() => void doApply()} loading={applying}>
-            {applying ? "Aplicando…" : "Aplicar correcciones"}
+          <Button onClick={() => void runBulk()} loading={running}>
+            {running ? "Automatizando…" : "Abrir y automatizar"}
           </Button>
         </div>
       </Dialog>
