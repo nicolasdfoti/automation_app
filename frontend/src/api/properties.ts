@@ -1,5 +1,5 @@
 import { apiFetch } from "./client";
-import type { Property, PropertyList, Stats } from "../types";
+import type { Property, PropertyList, PropertyUpdateInput, Stats } from "../types";
 
 export interface PropertiesQuery {
   search?: string;
@@ -23,6 +23,14 @@ export function fetchProperties(query: PropertiesQuery = {}): Promise<PropertyLi
 
 export function fetchProperty(codigo: string): Promise<Property> {
   return apiFetch<Property>(`/api/properties/${encodeURIComponent(codigo)}`);
+}
+
+export function updateProperty(codigo: string, data: PropertyUpdateInput): Promise<Property> {
+  return apiFetch<Property>(`/api/properties/${encodeURIComponent(codigo)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
 }
 
 export function fetchStats(): Promise<Stats> {

@@ -7,11 +7,24 @@ rows into a JSON-friendly shape.
 from __future__ import annotations
 
 import math
+from datetime import date
 from typing import Any
 
 import pandas as pd
 
+from backend.deps import write_lock
 from shared_store import db
+
+# Business fields a user may edit from the UI. ``codigo`` is the identifier,
+# and ``fuente`` / ``ultima_actualizacion`` are system-managed.
+EDITABLE_FIELDS = [
+    "direccion",
+    "superficie_m2",
+    "capacidad_personas",
+    "plazas_estacionamiento",
+    "anio_construccion",
+    "salas",
+]
 
 
 def _clean(value: Any) -> Any:
@@ -89,3 +102,24 @@ def get_property(codigo: str) -> dict | None:
     if vista.empty:
         return None
     return properties_to_records(vista.head(1))[0]
+
+
+def update_property(codigo: str, updates: dict) -> dict | None:
+    """Persist editable-field updates for one property.
+
+    Uses the existing ``db.update_property`` write mechanism. Only whitelisted
+    business fields are applied; ``ultima_actualizacion`` is stamped by the
+    system. Returns the updated record, or None when the property does not
+    exist. Writes are serialized with the process-level write lock.
+    """
+    allowed = {key: value for key, value in updates.items() if key in EDITABLE_FIELDS}
+    if not allowed:
+        return None
+    allowed["ultima_actualizacion"] = date.today().strftime("%d/%m/%Y")
+
+    with write_lock():
+        try:
+            db.update_property(codigo, allowed)
+        except ValueError:
+            return None
+        return get_property(codigo)

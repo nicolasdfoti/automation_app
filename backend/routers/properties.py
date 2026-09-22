@@ -1,9 +1,9 @@
-"""Read-only endpoints for the SIGE property catalog."""
+"""Endpoints for the SIGE property catalog."""
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Query
 
-from backend.schemas import Property, PropertyList
+from backend.schemas import Property, PropertyList, PropertyUpdate
 from backend.services import properties as properties_svc
 
 router = APIRouter(prefix="/properties", tags=["properties"])
@@ -70,6 +70,15 @@ def read_properties(
 @router.get("/{codigo}", response_model=Property)
 def read_property(codigo: str) -> Property:
     record = properties_svc.get_property(codigo)
+    if record is None:
+        raise HTTPException(status_code=404, detail=f"No existe la propiedad {codigo} en target_system")
+    return Property(**record)
+
+
+@router.put("/{codigo}", response_model=Property)
+def update_property(codigo: str, payload: PropertyUpdate) -> Property:
+    updates = payload.model_dump(exclude_unset=True, exclude_none=True)
+    record = properties_svc.update_property(codigo, updates)
     if record is None:
         raise HTTPException(status_code=404, detail=f"No existe la propiedad {codigo} en target_system")
     return Property(**record)
