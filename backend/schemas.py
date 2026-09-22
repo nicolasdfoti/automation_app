@@ -109,3 +109,72 @@ class GenerateAllResult(BaseModel):
     generated: int
     failed: int
     results: list[SchematicResult]
+
+
+class OcrRunResult(BaseModel):
+    """Synchronous result of one OCR pipeline execution."""
+
+    status: str
+    processed: int
+    total: int
+
+
+class OcrStatus(BaseModel):
+    """Current state of the OCR output, derived from real stored data."""
+
+    estado: str = "sin_esquematicos"
+    total_esquematicos: int = 0
+    procesados: int = 0
+    pendientes: int = 0
+
+
+class OcrResultItem(BaseModel):
+    """One row of the stored OCR output (no internal implementation detail)."""
+
+    codigo: str
+    archivo: str | None = None
+    direccion: str | None = None
+    fecha_relevamiento: str | None = None
+    superficie_m2: float | None = None
+    capacidad_personas: int | None = None
+    plazas_estacionamiento: int | None = None
+    anio_construccion: int | None = None
+    salas: int | None = None
+    error: str | None = None
+
+
+class OcrResultList(BaseModel):
+    count: int
+    items: list[OcrResultItem]
+
+
+class CompareField(BaseModel):
+    """Field-by-field outcome for one property, as produced by compute_comparison."""
+
+    campo: str
+    coinciden: bool | None = None
+    ground_truth: float | int | None = None
+    ocr: float | int | None = None
+
+
+class CompareItem(BaseModel):
+    codigo: str
+    status: str
+    todas_correctas: bool
+    fields: list[CompareField]
+
+
+class ComparePerField(BaseModel):
+    campo: str
+    exactitud: float
+
+
+class CompareResponse(BaseModel):
+    total: int
+    coinciden: int
+    diferencias: int
+    sin_datos: int
+    exactitud_global: float
+    propiedades_con_error: int
+    per_field: list[ComparePerField]
+    items: list[CompareItem]

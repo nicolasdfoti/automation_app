@@ -4,6 +4,8 @@ import Dashboard from "./pages/Dashboard";
 import PropertiesPage from "./pages/PropertiesPage";
 import PropertyDetailPage from "./pages/PropertyDetailPage";
 import EsquematicosPage from "./pages/EsquematicosPage";
+import OcrPage from "./pages/OcrPage";
+import ComparePage from "./pages/ComparePage";
 import NotImplementedPage from "./pages/NotImplementedPage";
 
 export default function App() {
@@ -14,8 +16,8 @@ export default function App() {
         <Route path="/propiedades" element={<PropertiesPage />} />
         <Route path="/propiedades/:codigo" element={<PropertyDetailPage />} />
         <Route path="/esquematicos" element={<EsquematicosPage />} />
-        <Route path="/ocr" element={<NotImplementedPage title="OCR" />} />
-        <Route path="/comparar" element={<NotImplementedPage title="Comparar" />} />
+        <Route path="/ocr" element={<OcrPage />} />
+        <Route path="/comparar" element={<ComparePage />} />
         <Route path="/automatizar" element={<NotImplementedPage title="Automatizar" />} />
         <Route path="*" element={<NotImplementedPage title="No encontrado" />} />
       </Route>

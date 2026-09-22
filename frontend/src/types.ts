@@ -68,3 +68,68 @@ export interface PropertyUpdateInput {
   anio_construccion?: number;
   salas?: number;
 }
+
+export interface OcrRunResult {
+  status: string;
+  processed: number;
+  total: number;
+}
+
+export type OcrEstado = "sin_esquematicos" | "nunca_ejecutado" | "completado";
+
+export interface OcrStatus {
+  estado: OcrEstado;
+  total_esquematicos: number;
+  procesados: number;
+  pendientes: number;
+}
+
+export interface OcrResultItem {
+  codigo: string;
+  archivo: string | null;
+  direccion: string | null;
+  fecha_relevamiento: string | null;
+  superficie_m2: number | null;
+  capacidad_personas: number | null;
+  plazas_estacionamiento: number | null;
+  anio_construccion: number | null;
+  salas: number | null;
+  error: string | null;
+}
+
+export interface OcrResultList {
+  count: number;
+  items: OcrResultItem[];
+}
+
+export type CompareStatus = "coincide" | "diferencia" | "sin_datos";
+
+export interface CompareField {
+  campo: string;
+  coinciden: boolean | null;
+  ground_truth: number | null;
+  ocr: number | null;
+}
+
+export interface CompareItem {
+  codigo: string;
+  status: CompareStatus;
+  todas_correctas: boolean;
+  fields: CompareField[];
+}
+
+export interface ComparePerField {
+  campo: string;
+  exactitud: number;
+}
+
+export interface CompareResponse {
+  total: number;
+  coinciden: number;
+  diferencias: number;
+  sin_datos: number;
+  exactitud_global: number;
+  propiedades_con_error: number;
+  per_field: ComparePerField[];
+  items: CompareItem[];
+}

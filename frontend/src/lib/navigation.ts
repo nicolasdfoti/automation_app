@@ -28,8 +28,8 @@ export const NAV_SECTIONS: { title: string; items: NavItem[] }[] = [
     title: "Pipeline OCR",
     items: [
       { to: "/esquematicos", label: "Esquemáticos", icon: Files },
-      { to: "/ocr", label: "OCR", icon: ScanLine, upcoming: true },
-      { to: "/comparar", label: "Comparar", icon: GitCompareArrows, upcoming: true },
+      { to: "/ocr", label: "OCR", icon: ScanLine },
+      { to: "/comparar", label: "Comparar", icon: GitCompareArrows },
       { to: "/automatizar", label: "Automatizar", icon: Workflow, upcoming: true },
     ],
   },

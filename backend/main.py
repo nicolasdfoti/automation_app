@@ -9,7 +9,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from backend.routers import properties as properties_router
 from backend.routers import schematics as schematics_router
+from backend.routers import compare as compare_router
 from backend.routers import stats as stats_router
+from backend.routers import ocr as ocr_router
 
 app = FastAPI(title="Automation Suite API", version="0.1.0")
 
@@ -34,5 +36,7 @@ def health() -> dict[str, str]:
 
 
 app.include_router(properties_router.router, prefix="/api")
-app.include_router(stats_router.router, prefix="/api")
 app.include_router(schematics_router.router, prefix="/api")
+app.include_router(ocr_router.router, prefix="/api")
+app.include_router(compare_router.router, prefix="/api")
+app.include_router(stats_router.router, prefix="/api")
