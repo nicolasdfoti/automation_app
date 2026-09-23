@@ -23,6 +23,8 @@ import shutil
 import sys
 from pathlib import Path
 
+import pandas as pd
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent))
 
 from fastapi.testclient import TestClient  # noqa: E402
@@ -84,8 +86,10 @@ def run_checks() -> None:
     ocr = db.read_ocr_output()
     assert "codigo" in ocr.columns and not ocr.empty
     ocr_norm = ocr.drop_duplicates("codigo", keep="last")
-    ocr_val = ocr_norm.loc[ocr_norm["codigo"].astype(str) == TARGET_CODIGO, FIELD].iloc[0]
-    db.update_property(TARGET_CODIGO, {FIELD: ocr_val})  # fuerza estado sin cambio
+    # Force ALL fields to match OCR so there are no pending changes
+    ocr_row = ocr_norm.loc[ocr_norm["codigo"].astype(str) == TARGET_CODIGO].iloc[0]
+    updates = {f: ocr_row[f] for f in db.NUMERIC_FIELDS if f in ocr_row and not pd.isna(ocr_row[f])}
+    db.update_property(TARGET_CODIGO, updates)
     result = pw_svc.apply_correction(TARGET_CODIGO, FIELD)
     assert result["success"] is False and result["stage"] == "no_change", result
     assert result["steps"] == []
@@ -121,7 +125,7 @@ def run_checks() -> None:
     assert batch_h["steps"] == [] and batch_h["results"][0]["stage"] == "no_change"
     r = client.post(
         "/api/automation/playwright/batch",
-        json={"codigos": [TARGET_CODIGO], "headless": True},
+        json={"codigos": [TARGET_CODIGO], "field": FIELD, "headless": True},
     )
     assert r.status_code == 200, r.text
     assert r.json()["results"][0]["stage"] == "no_change"

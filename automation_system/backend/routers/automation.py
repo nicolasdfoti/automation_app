@@ -1,19 +1,16 @@
-"""Automation endpoints: preview, apply, and the Playwright flow.
+"""Automation endpoints: preview and the Playwright flow.
 
 Thin orchestration over ``automation_system/backend/services/automation`` (the
-business logic layer). ``apply`` recomputes the corrections server-side from
-the current files every time; nothing is trusted from the browser. ``playwright``
-drives the Target System UI (http://127.0.0.1:5173) for ONE correction: the
-value to write is recomputed server-side from the stored files and the target
-is only updated through real browser interaction — never by a direct Excel
-write.
+business logic layer). The Playwright endpoints drive the Target System UI
+(http://127.0.0.1:5173) for corrections: the value to write is recomputed
+server-side from the stored files and the target is only updated through real
+browser interaction — never by a direct Excel write.
 """
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
 
 from automation_system.backend.schemas import (
-    AutomationApplyResult,
     AutomationPreview,
     PlaywrightAutomationBatchRequest,
     PlaywrightAutomationBatchResult,
@@ -30,12 +27,6 @@ router = APIRouter(prefix="/automation", tags=["automation"])
 def preview() -> AutomationPreview:
     """Correcciones propuestas contra los datos actuales (solo lectura)."""
     return AutomationPreview(**automation_svc.preview())
-
-
-@router.post("/apply", response_model=AutomationApplyResult)
-def apply() -> AutomationApplyResult:
-    """Aplica las correcciones detectadas a properties_db.xlsx."""
-    return AutomationApplyResult(**automation_svc.apply_preview_changes())
 
 
 @router.post("/playwright", response_model=PlaywrightAutomationResult)

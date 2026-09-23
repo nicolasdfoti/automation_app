@@ -162,17 +162,6 @@ class AutomationPreview(BaseModel):
     items: list[AutomationItem]
 
 
-class AutomationUpdatedItem(BaseModel):
-    codigo: str
-    updated_fields: list[str]
-
-
-class AutomationApplyResult(BaseModel):
-    updated_properties: int
-    updated_fields: int
-    items: list[AutomationUpdatedItem]
-
-
 class PlaywrightAutomationRequest(BaseModel):
     """Request to automate corrections through the Target System UI.
 

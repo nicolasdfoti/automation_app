@@ -1,86 +1,166 @@
 # Automation Suite — Pipeline OCR (SIGE)
 
-Dos sistemas de software independientes que cooperan sobre `shared_store/`
-(el equivalente mock a una base de datos/API compartida) mas un runtime
-compartido de utilidades:
+Dos sistemas FastAPI + React independientes que cooperan sobre `shared_store/` (el equivalente mock a una base de datos/API compartida) más un runtime compartido de utilidades en `common/`.
 
-| Sistema | Backend | Frontend | Descripcion |
+| Sistema | Backend | Frontend | Descripción |
 | --- | --- | --- | --- |
-| **`target_system/`** | FastAPI :8000 | Vite :5173 | "SIGE": propiedades, dashboard, detalle y edicion (GET/PUT de propiedades, stats). No conoce la existencia de Automation. |
-| **`automation_system/`** | FastAPI :8001 | Vite :5174 | Pipeline OCR: esquematicos, OCR, comparar, automatizar y la automatizacion por browser (Playwright sobre la UI de target). |
-| **`shared_store/`** | — | — | Datos compartidos: `properties_db.xlsx`, `ground_truth.xlsx`, `ocr_output.xlsx`, `schematics/*.pdf`. Cada sistema lee/escribe estos archivos; ninguno importa codigo interno del otro. |
-| **`common/`** | — | — | Utilidades neutrales (modelos, validacion, excel, lock de escritura). |
-| **`pdf_creator/`** | — | — | Genera el PDF del esquematico (ground truth). Runtime neutral consumido por Automation. |
-| **`pipeline_app/`**, `backend/` (parcial) | — | — | Runtime legacy / POC protegido sin commit (ver §3 y §7). |
+| **`target_system/`** | FastAPI :8000 | Vite :5173 | SIGE: propiedades, dashboard, detalle y edición (GET/PUT de propiedades, stats). No conoce la existencia de Automation. |
+| **`automation_system/`** | FastAPI :8001 | Vite :5174 | Pipeline OCR: esquemáticos, OCR, comparar, automatizar y la automatización por browser (Playwright sobre la UI de target). |
+| **`shared_store/`** | — | — | Datos compartidos: `properties_db.xlsx`, `ground_truth.xlsx`, `ocr_output.xlsx`, `schematics/*.pdf`. Cada sistema lee/escribe estos archivos; ninguno importa código interno del otro. |
+| **`common/`** | — | — | Utilidades neutrales (modelos, validación, excel, lock de escritura). |
+| **`pdf_creator/`** | — | — | Genera el PDF del esquemático (ground truth). Runtime neutral consumido por Automation. |
+| **`pipeline_app/`** | — | — | Prototipo Streamlit legacy del pipeline OCR. Su salida alimenta `ocr_output.xlsx`. |
 
-Regla arquitectonica central: **Automation NO importa `target_system.backend.*`**
-(no clases, funciones ni excepciones del backend de target). Todo acceso a una
-propiedad de target se hace por HTTP contra la API de target
-(`GET http://127.0.0.1:8000/api/properties/{codigo}`) o contra la UI de target.
-El flujo Playwright no toca Excel como fallback: solo escribe a traves de la UI
-real (`http://127.0.0.1:5173/propiedades/{codigo}`), que persiste via target.
+**Regla arquitectónica central:** Automation **NO importa** `target_system.backend.*` (no clases, funciones ni excepciones del backend de target). Todo acceso a una propiedad de target se hace por HTTP contra la API de target (`GET http://127.0.0.1:8000/api/properties/{codigo}`) o contra la UI de target. El flujo Playwright no toca Excel como fallback: solo escribe a través de la UI real (`http://127.0.0.1:5173/propiedades/{codigo}`), que persiste via target.
 
-## Puertos y arranque
+---
 
-```bash
-pip install -r requirements.txt
-python target_system/seed.py --count 20
+## Diagrama de arquitectura
 
-# ---- Target System ----
-uvicorn target_system.backend.main:app --host 127.0.0.1 --port 8000
-# frontend (Vite dev, puerto fijo 5173):
-cd target_system/frontend && npm run dev
+```
+                         AUTOMATION SYSTEM                          TARGET SYSTEM
+          +-------------------------------------+        +------------------------------+
+          |  React UI (Vite :5174)              |        |  React UI (Vite :5173)        |
+          |  /esquematicos /ocr /comparar       |        |  /propiedades/:codigo         |
+          |  /automatizar                       |        |  / (dashboard)                |
+          +-------------|-----------------------+        +-------------|----------------+
+                        | http://127.0.0.1:8001                      | http://127.0.0.1:8000
+          +-------------v-----------------------+        +-------------v----------------+
+          |  Automation API (FastAPI :8001)     |        |  Target API (FastAPI :8000)   |
+          |  /api/schematics  /api/ocr          |        |  /api/properties  /api/stats  |
+          |  /api/compare    /api/automation    |        +-------------|----------------+
+          |   (+ Playwright service)            |                      |
+          |                                    |        shared_store/ (Excel) via common/
+          |       Playwright abre Chromium y    |        +-------------------------------+
+          |       edita la UI real de Target -- |------> | UI real de Target (:5173)      |
+          |       (guarda por su formulario,    |        |  property-field-* + Guardar    |
+          |        nunca escribe Excel directo) |        +-------------------------------+
+          +-------------------------------------+
 
-# ---- Automation System ----
-uvicorn automation_system.backend.main:app --host 127.0.0.1 --port 8001
-# frontend (Vite dev, puerto fijo 5174):
-cd automation_system/frontend && npm run dev
+         pipeline_app/ (Streamlit, legacy) y pdf_creator/ (generador PDF)
+         operan sobre shared_store/ respetando las reglas de propiedad.
 ```
 
-Variables de entorno (Automation):
+---
 
-- `TARGET_API_BASE_URL` — base de la API de target (default `http://127.0.0.1:8000`).
-- `TARGET_UI_URL` — base de la UI de target para Playwright (default `http://127.0.0.1:5173`).
-- `PLAYWRIGHT_HEADLESS` — `1` para headless (CI/test), `0` (default) para browser visible.
-- `PLAYWRIGHT_STEP_DELAY_MS` — pausa visible entre pasos en modo headed (default `750`; `0` desactiva).
+## Stack tecnológico
 
-> Nota: `PLAYWRIGHT_HEADLESS` se lee al importar el modulo. Tambien puedes
-> forzarlo por corrida con `"headless": true/false` en el cuerpo de la peticion
-> (`/api/automation/playwright` y `/api/automation/playwright/batch`), sin
-> depender de una variable de entorno del proceso.
+| Capa | Tecnología |
+| --- | --- |
+| Backends | Python 3.11+ + FastAPI + Pydantic v2 |
+| Frontends | React 18 + TypeScript + Vite |
+| Datos | Archivos Excel reales en `shared_store/` (leer/escribir con `pandas` + `openpyxl`) |
+| Lock | Lock por mutex (Windows `msvcrt`) entre procesos en `common/store_lock.py` |
+| Automatización UI | Playwright (Python) sobre el navegador Chromium real de Target |
+| Legacy | Streamlit (`pipeline_app/`) y generador de PDFs (`pdf_creator/`) |
+| Pruebas | Scripts autocontenidos estilo pytest + builds de Vite (`tsc --noEmit` + `npm run build`) |
 
-Playwright (visible, headed): se abre el navegador real de Target
-(`http://127.0.0.1:5173/propiedades/{codigo}`), se edita y guarda la propiedad
-por su UI y se verifica recargando el detalle. Ciclo de vida persistente: para
-toda una corrida se abre **una sola instancia de Chromium** al inicio, se
-reutiliza (misma pagina) para corregir varias propiedades/campos y se cierra
-una sola vez al terminar. Desde la UI de Automation (:5174, pagina Automatizar),
-el boton "Automatizar" de cada fila o "Automatizar todas" dispara este flujo
-(nunca una escritura directa de Excel). Requerimientos de runtime: UI de target
-arriba (`5173`) + backend de target (`8000`) + backend de automation (`8001`).
-Ejemplo directo por API:
+---
 
+## Quick Start
+
+### Prerrequisitos
+- Windows 10/11 o WSL2 con interop Windows
+- Python 3.11+
+- Node.js 18+
+- Playwright Chromium: `playwright install chromium`
+
+### Instalación
 ```bash
-# sin "field": corrige todos los campos pendientes de la propiedad (una sesion)
-curl -X POST http://127.0.0.1:8001/api/automation/playwright \
-  -H 'Content-Type: application/json' \
-  -d '{"codigo":"877597"}'
+git clone <repo>
+cd automation_suite
 
-# un solo campo (compatibilidad con el flujo POC)
-curl -X POST http://127.0.0.1:8001/api/automation/playwright \
-  -H 'Content-Type: application/json' \
-  -d '{"codigo":"877597","field":"superficie_m2"}'
+# Python
+python -m venv venv
+venv/Scripts/pip install -r requirements.txt
+playwright install chromium
 
-# varias propiedades en UNA corrida (una sola ventana de Chromium)
-curl -X POST http://127.0.0.1:8001/api/automation/playwright/batch \
-  -H 'Content-Type: application/json' \
-  -d '{"codigos":["877597","638412"]}'
+# Frontends
+cd target_system/frontend && npm install && cd ../..
+cd automation_system/frontend && npm install && cd ../..
 
-# modo rapido headless por corrida (sin ventana, sin pausas visibles)
-curl -X POST http://127.0.0.1:8001/api/automation/playwright/batch \
-  -H 'Content-Type: application/json' \
-  -d '{"codigos":["877597","638412"],"headless":true}'
+# Sembrar datos de demo (20 propiedades sintéticas)
+venv/Scripts/python.exe target_system/seed.py --count 20
 ```
+
+### Arranque (4 terminales)
+```bash
+# Terminal 1: Target API
+venv/Scripts/python.exe -m uvicorn target_system.backend.main:app --port 8000
+
+# Terminal 2: Target UI
+cd target_system/frontend && npm run dev -- --port 5173
+
+# Terminal 3: Automation API
+venv/Scripts/python.exe -m uvicorn automation_system.backend.main:app --port 8001
+
+# Terminal 4: Automation UI
+cd automation_system/frontend && npm run dev -- --port 5174
+```
+
+### Uso
+1. Abre **Automation UI**: http://127.0.0.1:5174
+2. **Esquemáticos** → "Generar todos" (crea 20 PDFs + ground truth)
+3. **OCR** → "Ejecutar OCR" (extrae texto de los PDFs con pdfplumber)
+4. **Comparar** → ve exactitud por campo y diferencias por propiedad
+5. **Automatizar** → "Automatizar todas" (abre Chromium, corrige cada propiedad en la UI real de Target, verifica persistencia)
+6. Verifica en **Target UI**: http://127.0.0.1:5173/propiedades/{codigo} → `fuente = "automatizacion OCR"`
+
+---
+
+## Variables de entorno (Automation)
+
+| Variable | Default | Descripción |
+| --- | --- | --- |
+| `TARGET_API_BASE_URL` | `http://127.0.0.1:8000` | Base de la API de target |
+| `TARGET_UI_URL` | `http://127.0.0.1:5173` | Base de la UI de target para Playwright |
+| `PLAYWRIGHT_HEADLESS` | `0` | `1` para headless (CI/test), `0` para browser visible |
+| `PLAYWRIGHT_STEP_DELAY_MS` | `750` | Pausa visible entre pasos en modo headed; `0` desactiva |
+
+> Nota: `PLAYWRIGHT_HEADLESS` se lee al importar el módulo. También puedes forzar por corrida con `"headless": true/false` en el body de la petición (`/api/automation/playwright` y `/api/automation/playwright/batch`).
+
+---
+
+## API Reference (resumen)
+
+### Target System (`:8000`)
+| Método | Ruta | Descripción |
+| --- | --- | --- |
+| GET | `/api/health` | Health check |
+| GET | `/api/properties` | Listado con filtros (search, fuente, estado, superficie_min/max) |
+| GET | `/api/properties/{codigo}` | Detalle de propiedad |
+| PUT | `/api/properties/{codigo}` | Actualiza campos editables (direccion, 5 campos numéricos) |
+| GET | `/api/stats` | KPIs del dashboard |
+
+### Automation System (`:8001`, prefix `/api`)
+| Método | Ruta | Descripción |
+| --- | --- | --- |
+| GET | `/api/health` | Health check |
+| GET | `/api/schematics/pending` | Propiedades sin esquemático |
+| GET | `/api/schematics/catalog` | Todas las propiedades + estado de esquemático |
+| POST | `/api/schematics/generate` | Genera un esquemático (body: `SchematicGenerateRequest`) |
+| POST | `/api/schematics/generate-all` | Genera todos los pendientes |
+| GET | `/api/schematics/{codigo}/download` | Descarga PDF |
+| POST | `/api/ocr/run` | Ejecuta pipeline OCR (`reprocesar_todo` query param) |
+| GET | `/api/ocr/status` | Estado del OCR (pendientes/procesados) |
+| GET | `/api/ocr/results` | Resultados OCR crudos |
+| GET | `/api/compare` | Compara OCR vs Ground Truth (exactitud global, por campo, por propiedad) |
+| GET | `/api/automation/preview` | Previsualiza correcciones pendientes (no modifica datos) |
+| POST | `/api/automation/playwright` | Automatiza UNA propiedad por browser (body: `PlaywrightAutomationRequest`) |
+| POST | `/api/automation/playwright/batch` | Automatiza VARIAS propiedades en UNA sesión de browser (body: `PlaywrightAutomationBatchRequest`) |
+
+---
+
+## Reglas de propiedad de datos (`shared_store/`)
+
+| Archivo | Dueño | Escrito por |
+| --- | --- | --- |
+| `properties_db.xlsx` | Target System | Rutas de update de Target (`services/properties.py`) |
+| `ground_truth.xlsx` | `pdf_creator/` | Generador de PDFs / alta de ground truth |
+| `ocr_output.xlsx` | `pipeline_app/` | Pipeline OCR (Streamlit legacy o API) |
+| `schematics/*.pdf` | `pdf_creator/` | Rutas `/api/schematics/generate*` |
+
+---
 
 ## Tests
 
@@ -88,186 +168,47 @@ curl -X POST http://127.0.0.1:8001/api/automation/playwright/batch \
 # Target (paridad contra docs/phase0_endpoint_baseline.json)
 venv/Scripts/python.exe -m target_system.backend.tests.test_target_api
 
-# Automation (logica de correcciones + validaciones de Playwright sin browser)
+# Automation (lógica de correcciones + validaciones Playwright sin browser)
 venv/Scripts/python.exe -m automation_system.backend.tests.test_automation
 venv/Scripts/python.exe -m automation_system.backend.tests.test_playwright_validation
 
-# Lock de escritura compartido
+# Lock compartido
 venv/Scripts/python.exe -m common.tests.test_store_lock
 
 # Frontends (typecheck + build)
-venv/Scripts/python.exe -m pip install -q -r requirements.txt 2>/dev/null; \
-cd target_system/frontend    && npm run build && cd ../..; \
+cd target_system/frontend    && npm run build && cd ../..
 cd automation_system/frontend && npm run build && cd ../..
 ```
 
+> Las suites que mutan `shared_store/` deben correr **secuencialmente** y restauran su snapshot interno; correrlas en paralelo causa contiendas de escritura sobre los mismos workbooks.
+
+---
+
+## Limitaciones conocidas
+
+1. **Comparación UI rota**: La vista de comparación en Automation UI muestra "No pudimos cargar la comparación". Está documentada como limitación conocida y queda **fuera de alcance**; no se investiga ni modifica.
+2. **Dependencia de runtime de Target**: El flujo Playwright exige Target UI (`:5173`), Target API (`:8000`) y Chromium instalado; no hay mock.
+3. **Selectores acoplados a la UI de Target**: Los selectores (`#property-field-*`, "Guardar cambios", `[role='status']`) dependen del DOM del detalle; cambios en ese formulario requieren actualizarlos.
+4. **`PLAYWRIGHT_HEADLESS` se lee al importar**: Cambiar el modo por entorno exige reiniciar el proceso; por eso se soporta override por request (`"headless": true|false`).
+5. **Excel como almacén**: No hay transacciones, no hay índices, lock global serializa todas las escrituras. No escala.
+6. **OCR mock**: Usa pdfplumber sobre PDFs con texto seleccionable (no Tesseract / OCR real de imágenes).
+7. **Sin autenticación/autorización**: APIs abiertas, solo CORS restringido a orígenes de desarrollo.
+
+---
+
 ## Integridad de datos (invariantes)
 
-Los archivos de `shared_store/` son datos sinteticos autoridad. No se reseedean
-ni se "corrigen" quirks del OCR. Verificar por hash (ejemplos conocidos):
+Los archivos de `shared_store/` son datos sintéticos autoridad. No se reseedean ni se "corrigen" quirks del OCR. Verificar por hash:
 
 ```bash
 sha256sum shared_store/properties_db.xlsx shared_store/ground_truth.xlsx shared_store/ocr_output.xlsx
 find shared_store/schematics -name '*.pdf' | wc -l   # 20
 ```
 
-La discrepancia de validacion se preserva a proposito: target exige
-`superficie_m2 > 0` al editar; automation acepta `>= 0` en sus limites de campo.
+La discrepancia de validación se preserva a propósito: target exige `superficie_m2 > 0` al editar; automation acepta `>= 0` en sus límites de campo.
 
 ---
 
-<a id="final-report"/>
+## Licencia
 
-# §1 Background
-## Informe de estado — sistema
-
-El portfolio migra de una suite monolitica (un backend FastAPI :8000, un
-frontend Vite :5173, redireccion de imports a `target_system`) hacia una
-arquitectura con **dos sistemas independientes y ejecutables por separado**:
-Target (portador de datos, sin conocimiento del pipeline OCR) y Automation
-(consumidor que solo accede a target por HTTP/UI). La migracion se entrega en
-una unica operacion con un unico commit, preservando la integridad de los datos
-y las 7 pruebas del POC de Playwright.
-
-# §2 Objectives
-## Objetivos
-
-Completar la separacion Target/Automation en UNA operacion, con UN commit,
-cumpliendo: (1) Automation sin imports a `target_system.backend.*`; (2) el
-`automation_system/` como app independiente (:8001/:5174) sin routers de
-propiedades/stats; (3) Target intacto (:8000/:5173) y sin conocimiento de
-Automation; (4) sin duplicar logica de negocio; (5) Playwright retargeteado a
-la UI de target (:5173) manteniendo propiedad `550482` / campo `superficie_m2`;
-(6) los archivos sucios protegidos fuera del commit e inalterados en disco; y
-(7) datos (hashes + 20 PDFs) y flujos legacy intactos.
-
-# §3 Key Findings
-## Hallazgos clave
-
-- La unica violacion de imports de Automation→Target es en
-  `backend/services/schematics.py` y `backend/routers/schematics.py`
-  (`target_system.backend.services.properties`), usada para existencia y
-  `archivo_esquematico`. Se reemplaza por HTTP contra target.
-- `backend/routers/{properties,stats}.py` y `backend/main.py` son delegados de
-  target / monolitico: se retiran del arbol (target tiene copias propias).
-- Los archivos sucios protegidos (POC Playwright contra Mock External :5174)
-  solo importan `backend.main` / `backend.services.automation`; al mover los
-  modulos, el POC queda inerte en disco pero intacto y fuera del commit.
-- Los 3 imports legacy a `backend.*` (pdf_creator y pipeline_app) se reescriben
-  a `automation_system.backend.*`.
-- Los selectores de la UI de target para Playwright son
-  `#property-field-superficie|-capacidad|-estacionamiento|-anio|-salas`, boton
-  "Guardar cambios", feedback `role="status"`.
-
-# §4 Work Completed
-## Trabajo completado
-
-- **Fase 1 y 2 entregadas y commiteadas** (`cb2d2c7`): extraccion del Target
-  System; paridad de endpoints vs `docs/phase0_endpoint_baseline.json`;
-  builds de frontend; regresion del monolitico; Streamlit ok; hashes + 20 PDFs
-  verificados.
-- **Exploracion completa** de la superficie de codigo (backend, frontend,
-  target, mock, common, shared_store, pdf_creator, pipeline_app) y de los
-  diffs sucios protegidos.
-- **(v1) Este README final-state y el informe §7 se escribieron ANTES de la
-  implementacion (requisito Step 7); v2 se completa al cierre (ver §7).**
-- **Implementacion completada y verificada** en una unica operacion:
-
-# §5 Active Work
-## Trabajo activo
-
-- Migracion del backend de Automation: `git mv` de
-  `backend/services/{automation,compare,compare_api,ocr,schematics}.py`,
-  `backend/routers/{ocr,compare,schematics}.py`, `backend/deps.py`,
-  `backend/routers/__init__.py`, `backend/tests/{__init__,test_automation}.py`
-  hacia `automation_system/backend/`, con imports reescritos a
-  `automation_system.backend.*`.
-- Creacion de modulos nuevos de Automation: `main.py` (:8001, CORS 5174),
-  `schemas.py` (solo contratos de automation + Playwright),
-  `routers/automation.py` (preview/apply/playwright),
-  `services/target_api.py` (cliente HTTP de target),
-  `services/playwright_automation.py` (retargeteado a :5173),
-  `tests/test_playwright_validation.py` (sin browser).
-- Frontend de Automation: Vite :5174 → API :8001, rutas
-  Esquematicos/OCR/Comparar/Automatizar, navegacion solo "Pipeline OCR", endpoint
-  nuevo `GET /api/schematics/catalog` (pagina Esquematicos desacoplada de
-  `fetchProperties` de target), links externos a la UI de target en
-  Comparar/Automatizar. Copia sin `Dashboard`, `Properties` ni `PropertyDetail`.
-- Retiro del monolitico del arbol: `git rm` de `backend/main.py`,
-  `backend/routers/{properties,stats}.py` y `frontend/`; untrack de
-  `backend/schemas.py` y `backend/routers/automation.py` (contenido en disco
-  intacto).
-- Rewrite de imports legacy: `pdf_creator/app_pdf_creator.py` →
-  `automation_system.backend.services.schematics`;
-  `pipeline_app/pages/2_Comparar.py` →
-  `automation_system.backend.services.compare`;
-  `pipeline_app/pages/3_Automatizar.py` →
-  `automation_system.backend.services.automation`.
-
-# §6 Blocked
-## Bloqueado
-
-- Nada bloquea actualmente. Dependencias externas solo a nivel runtime
-  (target arriba) para el E2E Playwright por browser, que se documenta y se
-  verifica manualmente.
-- `requirements.txt` mantiene su diff sucio (agrega `playwright`); no entra al
-  commit. Una instalacion fresca del arbol commiteado necesita correr
-  `pip install playwright` para el flujo bybrowser.
-
-# §7 Final Report
-## Informe final
-
-### v1 — Antes de la implementacion (snapshot)
-
-- `automation_system/` no existe aun en el arbol. El monolitico `backend/` y
-  `frontend/` son las aplicaciones actuales; los archivos sucios protegidos
-  estan en su estado POC (Playwright contra Mock External :5174).
-- La estructura final prevista (§5) es la contrato contra la cual se escribe
-  la implementacion. El contenido real de este informe se actualiza en v2
-  (despues de implementar) con los artefactos y verificaciones logradas.
-- Pendiente de verificar al final: paridad de endpoints, cero imports
-  cruzados, sin duplicacion de servicios, hashes + PDFs intactos, tests y
-  builds en verde, `git status` mostrando SOLO los archivos sucios protegidos.
-
-### v2 — Despues de la implementacion (verificaciones concretas)
-
-- **Automation plana (cero cross-imports):** `automation_system/` no importa
-  `target_system` (grep de imports limpio; solo menciones en docstrings y
-  mensajes de error) ni el monolitico `backend.`; `target_system/` no importa
-  `automation_system`.
-- **Backend Automation verde:** `test_automation` (8 checks de logica de
-  correcciones) y `test_playwright_validation` (validation 422 / campo invalido
-  422 / propiedad 404 / escenario no_change sin browser) PASS, con
-  `shared_store/` restaurado al snapshot en cada corrida. `main.py` importa
-  limpio en :8001 con routers schematics/ocr/compare/automation (CORS 5174).
-- **Target intacto:** `test_target_api` PASS (paridad contra
-  `docs/phase0_endpoint_baseline.json`, PUT 422 preservado, y target responde
-  404 en `/api/ocr`, `/compare`, `/schematics`, `/automation`).
-- **Lock compartido:** `common.tests.test_store_lock` PASS (mutua exclusion,
-  liberacion ante excepcion, timeout).
-- **Frontends:** typecheck + build OK en `automation_system/frontend` (:5174 →
-  :8001, seccion "Pipeline OCR"). El build de target (:5173) sigue igual.
-- **Datos:** hashes intactos
-  (`properties_db.xlsx`=ab298809…, `ground_truth.xlsx`=89196d8e…,
-  `ocr_output.xlsx`=6a41ca57…); 20 PDFs en `shared_store/schematics/`.
-- **Legacy:** los 3 imports `backend.*` reescritos a `automation_system.*`;
-  `py_compile` OK en `pdf_creator/app_pdf_creator.py` y
-  `pipeline_app/pages/{2_Comparar,3_Automatizar}.py`.
-- **Commit:** un unico commit entrega la separacion; `git status` post-commit
-  muestra SOLO los archivos sucios protegidos (`backend/`, `frontend/` residue,
-  `requirements.txt`), todos fuera del commit e intactos en disco.
-- **Verificacion manual (no automatizable sin runtime):** E2E Playwright por
-  browser contra la UI real de target (:5173 + :8000 + :8001), documento en
-  §Puertos y arranque.
-
-# §8 Deliverables
-## Entregables
-
-1. `automation_system/backend/` — FastAPI :8001 (CORS 5174) con
-   schematics/ocr/compare/automation y Playwright sobre UI de target.
-2. `automation_system/frontend/` — Vite :5174 → API :8001, seccion "Pipeline OCR".
-3. `backend/` y `frontend/` monoliticos retirados del arbol (archivos sucios
-   protegidos intactos en disco, fuera del commit).
-4. Rewrite de imports legacy (`pdf_creator`, `pipeline_app`) → `automation_system.*`.
-5. Reporte final de 8 secciones (este archivo, §7) actualizado a v2.
-6. Un unico commit que excluye los archivos sucios protegidos.
+MIT (o la que correspondan) — este es un proyecto de portfolio/demo con datos 100% sintéticos.

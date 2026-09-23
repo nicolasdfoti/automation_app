@@ -1,23 +1,21 @@
-"""Automation preview/apply logic extracted from pipeline_app/pages/3_Automatizar.py.
+"""Automation preview logic extracted from pipeline_app/pages/3_Automatizar.py.
 
 The functions prefixed with ``merge``/``filter``/``build_preview``/``apply_corrections``
 preserve the exact semantics used by the Streamlit page (they are its source of
-truth). The API layer adds type-safe ``build_changes`` / ``preview`` /
-``apply_preview_changes``: they recompute the proposed corrections from the
-current stored files every time (no data is trusted from the browser), only
-touch whitelisted numeric fields, skip invalid/out-of-range OCR values, and
-never modify ``fuente`` or the schematic metadata. Playwright / browser
-automation is intentionally out of scope for this business workflow.
+truth). The API layer adds type-safe ``build_changes`` / ``preview``:
+they recompute the proposed corrections from the current stored files every time
+(no data is trusted from the browser), only touch whitelisted numeric fields,
+skip invalid/out-of-range OCR values, and never modify ``fuente`` or the
+schematic metadata. Playwright / browser automation is intentionally out of
+scope for this business workflow.
 """
 from __future__ import annotations
 
 import math
-from datetime import date
 from typing import Any
 
 import pandas as pd
 
-from automation_system.backend.deps import write_lock
 from shared_store import db
 
 # Presentation labels for the numeric fields corrected by automation.
@@ -199,37 +197,4 @@ def preview() -> dict:
         "properties_with_changes": len(items),
         "total_changes": sum(len(i["changes"]) for i in items),
         "items": items,
-    }
-
-
-def apply_preview_changes() -> dict:
-    """Persiste las correcciones detectadas, recalculadas desde los archivos.
-
-    No acepta valores del navegador: recalcula todo server-side y aplica solo
-    campos validos. Idempotente: una segunda corrida no encuentra cambios.
-    """
-    propiedades = db.read_properties()
-    ocr = db.read_ocr_output()
-    if propiedades.empty or ocr.empty or "codigo" not in ocr.columns:
-        return {"updated_properties": 0, "updated_fields": 0, "items": []}
-    items = build_changes(propiedades, ocr)
-    fecha = date.today().strftime("%d/%m/%Y")
-    resultado: list[dict] = []
-    updated_properties, updated_fields = 0, 0
-    with write_lock():
-        for it in items:
-            updates = {c["field"]: c["new_value"] for c in it["changes"]}
-            if not updates:
-                continue
-            try:
-                db.update_property(it["codigo"], {**updates, "ultima_actualizacion": fecha})
-            except ValueError:
-                continue  # la propiedad desaparecio entre preview y apply: se salta
-            resultado.append({"codigo": it["codigo"], "updated_fields": list(updates)})
-            updated_properties += 1
-            updated_fields += len(updates)
-    return {
-        "updated_properties": updated_properties,
-        "updated_fields": updated_fields,
-        "items": resultado,
     }

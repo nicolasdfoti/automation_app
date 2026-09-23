@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 import pandas as pd
 
+from common.excel import clean_numeric, equivalentes
 from shared_store import db
 
 
@@ -15,6 +16,11 @@ class ComparisonResult:
     per_field: pd.DataFrame     # columns ["Campo", "Exactitud (%)"]
     exactitud_global: float
     propiedades_con_error: int
+
+
+def _match_values(gt_val, ocr_val) -> bool:
+    """Numeric equivalence: 563 == 563.0 == '563'; NaN/None match each other."""
+    return equivalentes(gt_val, ocr_val)
 
 
 def compute_comparison(gt: pd.DataFrame, ocr: pd.DataFrame) -> ComparisonResult:
@@ -29,7 +35,7 @@ def compute_comparison(gt: pd.DataFrame, ocr: pd.DataFrame) -> ComparisonResult:
         col_gt, col_ocr = f"{campo}_gt", f"{campo}_ocr"
         if col_gt not in merged or col_ocr not in merged:
             continue
-        match = merged[col_gt].astype(str) == merged[col_ocr].astype(str)
+        match = merged.apply(lambda row: _match_values(row[col_gt], row[col_ocr]), axis=1)
         resultado[campo] = match
         total_comparaciones += len(match)
         total_correctas += int(match.sum())

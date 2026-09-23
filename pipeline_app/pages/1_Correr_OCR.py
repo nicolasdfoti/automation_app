@@ -1,7 +1,7 @@
 import os
 import re
-import subprocess
 import sys
+import threading
 from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from shared_store import db
 import ui
+from pipeline_app.ocr import pipeline_mock
 
 st.set_page_config(page_title="Correr OCR — Demo", page_icon="\U0001F50D", layout="wide")
 ui.inject_css()
@@ -82,54 +83,67 @@ with st.container(border=True):
 
     if run_ocr:
         omitir_codigos = [] if forzar_todo else list(codigos_procesados)
-        cmd = [
-            sys.executable, "-m", "ocr.pipeline_mock",
-            "--omitir-codigos", ",".join(omitir_codigos),
-            "--workers", str(int(workers)),
-        ]
-        total_re = re.compile(r"Proyectos a procesar \(tras filtrar pendientes\):\s*(\d+)")
-        avance_re = re.compile(r"procesados\s+(\d+)/(\d+)")
 
         with st.status("Corriendo OCR mock sobre los esquematicos\u2026", expanded=True) as status:
             barra = st.progress(0.0)
             progreso_texto = st.empty()
-            progreso_texto.caption("Arrancando el proceso\u2026")
+            progreso_texto.caption("Arrancando\u2026")
 
-            proc = subprocess.Popen(
-                cmd, cwd=str(Path(__file__).resolve().parent.parent),
-                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1,
-            )
-            lineas = []
-            total_proyectos = None
-            for linea in proc.stdout:
-                lineas.append(linea.rstrip("\n"))
-                m_total = total_re.search(linea)
-                if m_total:
-                    total_proyectos = int(m_total.group(1))
-                    progreso_texto.caption(
-                        "No hay proyectos nuevos para procesar." if total_proyectos == 0
-                        else f"0/{total_proyectos} proyectos procesados\u2026"
+            # Run pipeline in a thread to avoid blocking the UI
+            result_box = {"df": None, "error": None}
+            
+            def run_pipeline_thread():
+                try:
+                    df = pipeline_mock.run_pipeline(
+                        db.SCHEMATICS_DIR,
+                        omitir_codigos=omitir_codigos,
+                        workers=int(workers),
                     )
-                m_avance = avance_re.search(linea)
-                if m_avance:
-                    hechos, total_proyectos = int(m_avance.group(1)), int(m_avance.group(2))
-                    barra.progress(min(hechos / total_proyectos, 1.0) if total_proyectos else 0.0)
-                    progreso_texto.caption(f"{hechos}/{total_proyectos} proyectos procesados\u2026")
-
-            proc.wait()
+                    result_box["df"] = df
+                except Exception as e:
+                    result_box["error"] = e
+            
+            thread = threading.Thread(target=run_pipeline_thread)
+            thread.start()
+            
+            # Simple progress animation while thread runs
+            import time
+            dots = 0
+            while thread.is_alive():
+                dots = (dots + 1) % 4
+                progreso_texto.caption(f"Procesando{'.' * dots}")
+                time.sleep(0.5)
+            
+            thread.join()
+            
             barra.progress(1.0)
-            salida = "\n".join(lineas)
-            resultado = SimpleNamespace(returncode=proc.returncode, stdout=salida)
+            
+            if result_box["error"]:
+                raise result_box["error"]
+            
+            df = result_box["df"]
+            
+            # Persist results (same logic as pipeline_mock.main)
+            if df is not None and not df.empty:
+                if db.OCR_OUTPUT_XLSX.exists():
+                    previo = pd.read_excel(db.OCR_OUTPUT_XLSX)
+                    combinado = pd.concat([previo, df], ignore_index=True).drop_duplicates("codigo", keep="last")
+                else:
+                    combinado = df
+                combinado.to_excel(db.OCR_OUTPUT_XLSX, index=False)
+                procesados = len(df)
+                total = len(combinado)
+            else:
+                procesados = 0
+                total = len(pd.read_excel(db.OCR_OUTPUT_XLSX)) if db.OCR_OUTPUT_XLSX.exists() else 0
 
-        if resultado.returncode == 0:
+        if result_box["error"] is None:
             status.update(label="OCR terminado correctamente", state="complete")
-            ui.info_banner("OCR completado. Los resultados quedaron en ocr_output.xlsx.", tone="success")
+            ui.info_banner(f"OCR completado: {procesados} nuevos/actualizados, {total} totales en ocr_output.xlsx.", tone="success")
             st.page_link("pages/2_Comparar.py", label="\u2192 Ir a Comparar contra el ground truth")
             if st.button("\U0001F504 Actualizar lista y estados", key="refresh_after_ocr"):
                 st.rerun()
-            with st.expander("Ver salida del proceso"):
-                st.code(resultado.stdout[-4000:] or "(sin salida)")
         else:
             status.update(label="El OCR termino con errores", state="error")
             ui.info_banner("Hubo un error corriendo el pipeline.", tone="danger")
-            st.code(resultado.stdout[-3000:])
+            st.code(str(result_box["error"]))

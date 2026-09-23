@@ -1,4 +1,4 @@
-"""Backend test battery for the automation preview/apply workflow.
+"""Backend test battery for the automation preview workflow.
 
 Run with the project venv:
 
@@ -25,7 +25,6 @@ from automation_system.backend.services.automation import (  # noqa: E402
     _clean_numeric,
     _display,
     _equivalentes,
-    apply_preview_changes,
     build_changes,
     preview,
 )
@@ -146,66 +145,45 @@ def run_checks() -> None:
     assert "anio_construccion" not in campos_bad
     assert "plazas_estacionamiento" not in campos_bad
     assert campos_bad <= set(FIELDS)
-    # los valores invalidos nunca se escriben: se omiten de apply igual que de preview
-    res_bad = apply_preview_changes()
-    assert all(
-        {"superficie_m2", "anio_construccion", "plazas_estacionamiento"}.isdisjoint(item["updated_fields"])
-        for item in res_bad["items"]
-        if item["codigo"] == codigo
-    )
-    props_bad = db.read_properties()
-    prop_stale = props0[props0["codigo"].astype(str) == codigo].iloc[0]
-    prop_bad = props_bad[props_bad["codigo"].astype(str) == codigo].iloc[0]
-    assert prop_bad["superficie_m2"] == prop_stale["superficie_m2"]
-    assert prop_bad["anio_construccion"] == prop_stale["anio_construccion"]
-    print("[ok] datos invalidos omitidos con seguridad (no se escriben)")
+    print("[ok] datos invalidos omitidos en preview (no se proponen)")
 
     # --- volver al OCR preseteado para continuar el flujo limpio --------------
     shutil.copy2(SNAPSHOT_DIR / db.OCR_OUTPUT_XLSX.name, db.OCR_OUTPUT_XLSX)
+    shutil.copy2(SNAPSHOT_DIR / db.PROPERTIES_XLSX.name, db.PROPERTIES_XLSX)
     ocr0 = db.read_ocr_output()
-    props0 = db.read_properties()  # apply del test invalido ya corrigio capacity/salas del codigo
+    props0 = db.read_properties()
 
-    # --- apply sobre el estado stale restante ---
+    # --- preview sobre el estado stale restante ---
     p = preview()
     assert p["total_changes"] > 0
-    res = apply_preview_changes()
-    assert res["updated_properties"] == p["properties_with_changes"]
-    assert res["updated_fields"] == p["total_changes"]
-    assert len(res["items"]) == res["updated_properties"]
-    print(f"[ok] apply: {res['updated_properties']} propiedades, {res['updated_fields']} campos")
+    print(f"[ok] preview: {p['properties_with_changes']} propiedades, {p['total_changes']} campos")
 
-    # --- persistence: reload del xlsx y comparar contra OCR ---
-    props_after = db.read_properties()
-    ocr_norm = ocr0.drop_duplicates("codigo", keep="last")
-    ocr_by = ocr_norm.set_index(ocr_norm["codigo"].astype(int).astype(str))
-    for item in res["items"]:
-        row = ocr_by.loc[item["codigo"]]
-        prop = props_after[props_after["codigo"].astype(str) == item["codigo"]].iloc[0]
-        for field in item["updated_fields"]:
-            assert _clean_numeric(prop[field]) == _clean_numeric(row[field]), (item["codigo"], field)
-    for item in res["items"]:
-        before = props0[props0["codigo"].astype(str) == item["codigo"]].iloc[0]
-        after = props_after[props_after["codigo"].astype(str) == item["codigo"]].iloc[0]
-        assert str(after["codigo"]) == str(before["codigo"])
-        assert after["direccion"] == before["direccion"]
-        assert after["fuente"] == before["fuente"]
-        assert after["esquematico_generado"] == before["esquematico_generado"]
-        assert after["archivo_esquematico"] == before["archivo_esquematico"]
-    print("[ok] persistencia: valores corregidos en el xlsx; codigo/direccion/fuente/metadatos intactos")
-
-    # --- idempotencia: segunda corrida no vuelve a tocar nada ---
+    # --- idempotencia: preview no modifica datos ---
     p2 = preview()
-    assert p2["total_changes"] == 0 and p2["properties_with_changes"] == 0
-    res2 = apply_preview_changes()
-    assert res2["updated_properties"] == 0 and res2["updated_fields"] == 0 and res2["items"] == []
-    print("[ok] idempotencia: segunda corrida -> 0 cambios")
+    assert p2["total_changes"] == p["total_changes"] and p2["properties_with_changes"] == p["properties_with_changes"]
+    print("[ok] idempotencia: preview repetido devuelve mismos resultados")
 
     # --- caso sin cambios (datos ya iguales) ---
-    assert build_changes(props_after, ocr_norm) == []
+    # Seed a state where properties match OCR exactly
+    props_clean = db.read_properties()
+    ocr_clean = db.read_ocr_output().drop_duplicates("codigo", keep="last")
+    # Apply OCR values to properties to make them match
+    for _, row in ocr_clean.iterrows():
+        codigo = str(int(row["codigo"]))
+        updates = {}
+        for field in FIELDS:
+            if field in row and not pd.isna(row[field]):
+                updates[field] = row[field]
+        if updates:
+            db.update_property(codigo, updates)
+    props_matched = db.read_properties()
+    assert build_changes(props_matched, ocr_clean) == []
     print("[ok] sin cambios: current == OCR -> sin correcciones")
 
 
 def main() -> None:
+    # Seed stale first, then snapshot that state
+    seed_stale()
     snapshot()
     print(f"[setup] snapshot en {SNAPSHOT_DIR}")
     try:
